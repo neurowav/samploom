@@ -1,0 +1,60 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode — build products and per-user state
+build/
+DerivedData/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+*.xcodeproj/project.xcworkspace/xcuserdata/
+timeline.xctimeline
+playground.xcworkspace
+
+# Xcode — test and coverage artifacts
+*.xcresult/
+TestResults/
+coverage/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Secrets and signing material
+.env
+.env.*
+*.p12
+*.cer
+*.certSigningRequest
+*.mobileprovision
+*.provisionprofile
+*.keystore
+Secrets.swift
+GoogleService-Info.plist
+
+# User and third-party audio material.
+# Splice and similar samples are licence-restricted: never commit them.
+# Small generated test fixtures may be force-added with `git add -f`.
+Assets/Audio/
+Samples/
+SampleAudio/
+*.wav
+*.aif
+*.aiff
+*.mp3
+*.m4a
+*.caf
