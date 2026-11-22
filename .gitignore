@@ -37,6 +37,7 @@ fastlane/test_output
 # Secrets and signing material
 .env
 .env.*
+Config/Local.xcconfig
 *.p12
 *.cer
 *.certSigningRequest

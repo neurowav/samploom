@@ -1,0 +1,5 @@
+// Signing identity is per developer and must not live in the repository.
+// Copy Local.xcconfig.sample to Local.xcconfig and set DEVELOPMENT_TEAM there.
+// Local.xcconfig is git-ignored; the include is optional, so a fresh clone
+// builds without it.
+#include? "Local.xcconfig"

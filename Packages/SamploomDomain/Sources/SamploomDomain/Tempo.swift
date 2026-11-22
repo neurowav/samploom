@@ -8,6 +8,10 @@ public struct Tempo: Hashable, Sendable {
     /// faster ones are not useful for slicing.
     public static let supportedRange: ClosedRange<Double> = 20...400
 
+    /// Tempo used when a sample carries no BPM: 90 BPM keeps one-bar slices
+    /// short enough for random starts to still feel musical.
+    public static let assumed: Tempo = .init(uncheckedBeatsPerMinute: 90)
+
     public let beatsPerMinute: Double
 
     public init(beatsPerMinute: Double) throws {
@@ -15,5 +19,9 @@ public struct Tempo: Hashable, Sendable {
             throw ValidationError.outOfRange(beatsPerMinute)
         }
         self.beatsPerMinute = beatsPerMinute
+    }
+
+    private init(uncheckedBeatsPerMinute: Double) {
+        self.beatsPerMinute = uncheckedBeatsPerMinute
     }
 }

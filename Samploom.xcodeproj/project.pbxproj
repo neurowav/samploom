@@ -23,6 +23,7 @@
 /* Begin PBXFileReference section */
 		5A4D00000000000000000005 /* Samploom.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Samploom.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5A4D0000000000000000001F /* SamploomTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SamploomTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A4D00000000000000000033 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -62,6 +63,7 @@
 			children = (
 				5A4D00000000000000000006 /* Samploom */,
 				5A4D00000000000000000020 /* SamploomTests */,
+				5A4D00000000000000000034 /* Config */,
 				5A4D00000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -73,6 +75,14 @@
 				5A4D0000000000000000001F /* SamploomTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		5A4D00000000000000000034 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				5A4D00000000000000000033 /* Base.xcconfig */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -211,6 +221,7 @@
 /* Begin XCBuildConfiguration section */
 		5A4D0000000000000000000C /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5A4D00000000000000000033 /* Base.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -274,6 +285,7 @@
 		};
 		5A4D0000000000000000000D /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5A4D00000000000000000033 /* Base.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -333,6 +345,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = accent;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
@@ -361,6 +374,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = accent;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;

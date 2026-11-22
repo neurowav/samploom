@@ -1,4 +1,5 @@
 import Foundation
+import SamploomDomain
 import Testing
 
 @testable import Samploom
@@ -58,6 +59,44 @@ struct ImportViewModelTests {
         #expect(harness.model.errorMessage == nil)
     }
 
+    @Test("A slice plan appears once the audio is decoded")
+    func planForLoadedSample() async throws {
+        let harness: Harness = .init()
+        defer { harness.cleanUp() }
+        let source: URL = try harness.makeSourceFile(
+            named: "loop_120BPM.wav",
+            contents: WAVFixture.tone(seconds: 4, amplitude: 0.6)
+        )
+        harness.model.handlePickedFile(.success(source))
+        await harness.waitUntilDecoded()
+        let plan: SlicePlan = try #require(harness.model.plan)
+        #expect(plan.starts.count == 4)
+        #expect(plan.sliceLength == 2.0)
+        #expect(Set(plan.starts).count == 1)
+    }
+
+    @Test("A silent sample gives an empty plan instead of empty slices")
+    func silentSampleHasNoPlan() async throws {
+        let harness: Harness = .init()
+        defer { harness.cleanUp() }
+        let source: URL = try harness.makeSourceFile(
+            named: "silence.wav",
+            contents: WAVFixture.silence(seconds: 4)
+        )
+        harness.model.handlePickedFile(.success(source))
+        await harness.waitUntilDecoded()
+        #expect(harness.model.plan?.isEmpty == true)
+    }
+
+    @Test("Reshuffling changes the seed")
+    func reshuffleChangesSeed() async {
+        let harness: Harness = .init()
+        defer { harness.cleanUp() }
+        let first: UInt64 = harness.model.seed
+        harness.model.reshuffle()
+        #expect(harness.model.seed != first)
+    }
+
     @Test("The grid follows the tempo detected in the file name")
     func gridFromFileNameTempo() async throws {
         let harness: Harness = .init()
@@ -108,6 +147,17 @@ private struct Harness {
         await waitUntilImported()
         for _ in 0..<200 {
             if model.info != nil {
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
+
+    /// Decoding follows inspection, so the plan needs one more wait.
+    func waitUntilDecoded() async {
+        await waitUntilInspected()
+        for _ in 0..<200 {
+            if model.decoded != nil {
                 return
             }
             try? await Task.sleep(for: .milliseconds(10))

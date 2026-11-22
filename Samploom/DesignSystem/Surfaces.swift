@@ -43,3 +43,26 @@ struct PrimaryButtonStyle: ButtonStyle {
         }
     }
 }
+
+/// Secondary action: accent text on the card surface.
+struct SecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        SecondaryButtonBody(configuration: configuration)
+    }
+
+    private struct SecondaryButtonBody: View {
+        let configuration: SecondaryButtonStyle.Configuration
+
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            configuration.label
+                .font(Typography.headline)
+                .foregroundStyle(.accent)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, Metrics.Spacing.medium)
+                .background(.accent.opacity(0.12), in: .rect(cornerRadius: Metrics.Radius.chip))
+                .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.45)
+        }
+    }
+}

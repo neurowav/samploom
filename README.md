@@ -12,10 +12,25 @@ An audio file from Files becomes grid-aligned slices; slices are replayed as a l
 
 ## Status
 
-Scaffold, design system, sample import, tempo detection and the musical grid.
-A file picked in Files is copied into the app container, its BPM is read from
-tags or from the name, and the grid shows bar and step lengths. Slicing and
-playback are next.
+Scaffold, design system, sample import, tempo detection, the musical grid and
+slice planning. A file picked in Files is copied into the app container, its
+BPM is read from tags or from the name (90 BPM is assumed when nothing is
+found), audio is decoded, and the screen draws the waveform with the slice
+windows on top. Silent positions are skipped so a slice is never empty.
+Playback is next.
+
+## Signing
+
+`DEVELOPMENT_TEAM` is not committed. Xcode's automatic signing keeps it in
+`Config/Local.xcconfig`, which is git-ignored:
+
+```
+cp Config/Local.xcconfig.sample Config/Local.xcconfig
+# set DEVELOPMENT_TEAM to your 10-character team ID
+```
+
+`Config/Base.xcconfig` includes that file optionally, so a fresh clone builds
+without it.
 
 ## Structure
 
@@ -29,7 +44,7 @@ Samploom/
 └── Resources/      Asset catalog
 SamploomTests/      Unit tests for storage, detection and screen state
 Packages/
-└── SamploomDomain/ Pure musical model: tempo, meter, grid, quantisation
+└── SamploomDomain/ Pure musical model: tempo, meter, grid, slicing
 ```
 
 `SamploomDomain` has no UIKit, SwiftUI or AVFoundation dependency, so the

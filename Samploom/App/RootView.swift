@@ -75,14 +75,12 @@ struct RootView: View {
             EmptyView()
         case .imported:
             if let grid: MusicalGrid = viewModel.grid {
-                tempoCard(grid: grid)
-            } else if viewModel.info != nil {
-                noTempoCard
+                sliceCard(grid: grid)
             }
         }
     }
 
-    private func tempoCard(grid: MusicalGrid) -> some View {
+    private func sliceCard(grid: MusicalGrid) -> some View {
         VStack(alignment: .leading, spacing: Metrics.Spacing.medium) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Grid")
@@ -96,9 +94,17 @@ struct RootView: View {
                     .foregroundStyle(.textSecondary)
             }
 
+            if let decoded: DecodedSample = viewModel.decoded {
+                WaveformView(sample: decoded, plan: viewModel.plan)
+            }
+
             valueRow(title: "Tempo", value: tempoText)
             valueRow(title: "Bar", value: secondsText(grid.secondsPerBar))
             valueRow(title: "Step", value: secondsText(grid.step(for: viewModel.division)))
+            valueRow(title: "Repeat", value: "\(viewModel.repeats) × \(viewModel.barsPerSlice) bar")
+
+            Divider()
+                .background(.hairline)
 
             Picker("Grid division", selection: $viewModel.division) {
                 ForEach(GridDivision.allCases, id: \.self) { division in
@@ -108,24 +114,28 @@ struct RootView: View {
             .pickerStyle(.segmented)
             .labelsHidden()
 
+            Picker("Slice mode", selection: $viewModel.mode) {
+                Text("Single").tag(SliceMode.single)
+                Text("Random").tag(SliceMode.random)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+
+            if let plan: SlicePlan = viewModel.plan, plan.isEmpty {
+                Text("Every grid position is silent — nothing to slice.")
+                    .font(Typography.caption)
+                    .foregroundStyle(.textSecondary)
+            } else {
+                Button("Reshuffle") {
+                    viewModel.reshuffle()
+                }
+                .buttonStyle(SecondaryButtonStyle())
+            }
+
             Text(tempoSourceText)
                 .font(Typography.caption)
                 .foregroundStyle(.textSecondary)
         }
-        .surface()
-    }
-
-    private var noTempoCard: some View {
-        VStack(alignment: .leading, spacing: Metrics.Spacing.xSmall) {
-            Text("Tempo not detected")
-                .font(Typography.headline)
-                .foregroundStyle(.textPrimary)
-
-            Text("No BPM in the file tags or in its name. Manual entry and tap tempo come next.")
-                .font(Typography.caption)
-                .foregroundStyle(.textSecondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .surface()
     }
 
@@ -181,12 +191,14 @@ struct RootView: View {
     }
 
     private var tempoText: String {
-        guard let tempo: Tempo = viewModel.info?.tempo?.tempo else { return "—" }
+        guard let tempo: Tempo = viewModel.grid?.tempo else { return "—" }
         return "\(tempo.beatsPerMinute.formatted()) BPM"
     }
 
     private var tempoSourceText: String {
-        guard let source: DetectedTempo.Source = viewModel.info?.tempo?.source else { return "" }
+        guard let source: DetectedTempo.Source = viewModel.info?.tempo?.source else {
+            return "Tempo assumed: no BPM in the file tags or its name."
+        }
         switch source {
         case .metadata:
             return "Tempo read from file tags."
