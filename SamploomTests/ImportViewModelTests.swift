@@ -7,83 +7,114 @@ import Testing
 @Suite("ImportViewModel")
 struct ImportViewModelTests {
     @Test("Picking a file moves the state to imported")
-    func successSetImportedContent() async throws {
-        let source = try makeSourceFile(named: "break 174BPM.wav")
-        let testCase = makeViewModel()
-        defer { try? FileManager.default.removeItem(at: testCase.directory) }
-
-        testCase.model.handlePickedFile(.success(source))
-        await waitUntilIdle(testCase.model)
-
-        guard case .imported(let sample) = testCase.model.content else {
-            Issue.record("Expected imported content, got \(testCase.model.content)")
+    func successSetsImportedContent() async throws {
+        let harness: Harness = .init()
+        defer { harness.cleanUp() }
+        let source: URL = try harness.makeSourceFile(named: "break 174BPM.wav")
+        harness.model.handlePickedFile(.success(source))
+        await harness.waitUntilImported()
+        guard case .imported(let sample) = harness.model.content else {
+            Issue.record("Expected imported content, got \(harness.model.content)")
             return
         }
         #expect(sample.displayName == "break 174BPM.wav")
-        #expect(testCase.model.errorMessage == nil)
+        #expect(harness.model.errorMessage == nil)
     }
 
     @Test("Replacing a sample removes the previous copy")
     func replaceRemovesPreviousCopy() async throws {
-        let first = try makeSourceFile(named: "first.wav")
-        let second = try makeSourceFile(named: "second.wav")
-        let testCase = makeViewModel()
-        defer { try? FileManager.default.removeItem(at: testCase.directory) }
-
-        testCase.model.handlePickedFile(.success(first))
-        await waitUntilIdle(testCase.model)
-        guard case .imported(let firstSample) = testCase.model.content else {
+        let harness: Harness = .init()
+        defer { harness.cleanUp() }
+        let first: URL = try harness.makeSourceFile(named: "first.wav")
+        let second: URL = try harness.makeSourceFile(named: "second.wav")
+        harness.model.handlePickedFile(.success(first))
+        await harness.waitUntilImported()
+        guard case .imported(let firstSample) = harness.model.content else {
             Issue.record("Expected the first sample to be imported")
             return
         }
-
-        testCase.model.handlePickedFile(.success(second))
-        await waitUntilIdle(testCase.model)
-
+        harness.model.handlePickedFile(.success(second))
+        await harness.waitUntilImported()
         #expect(FileManager.default.fileExists(atPath: firstSample.url.path(percentEncoded: false)) == false)
     }
 
     @Test("A failed import reports the error and keeps the previous state")
     func failureKeepsPreviousContent() async throws {
-        let testCase = makeViewModel()
-        defer { try? FileManager.default.removeItem(at: testCase.directory) }
-
-        let missing = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).wav")
-        testCase.model.handlePickedFile(.success(missing))
-        await waitUntilIdle(testCase.model)
-
-        #expect(testCase.model.content == .empty)
-        #expect(testCase.model.errorMessage != nil)
+        let harness: Harness = .init()
+        defer { harness.cleanUp() }
+        let missing: URL = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).wav")
+        harness.model.handlePickedFile(.success(missing))
+        await harness.waitUntilImported()
+        #expect(harness.model.content == .empty)
+        #expect(harness.model.errorMessage != nil)
     }
 
     @Test("A cancelled picker does not change the state")
     func cancellationIsSilent() {
-        let testCase = makeViewModel()
-
-        testCase.model.handlePickedFile(.failure(CocoaError(.userCancelled)))
-
-        #expect(testCase.model.content == .empty)
-        #expect(testCase.model.errorMessage == nil)
+        let harness: Harness = .init()
+        defer { harness.cleanUp() }
+        harness.model.handlePickedFile(.failure(CocoaError(.userCancelled)))
+        #expect(harness.model.content == .empty)
+        #expect(harness.model.errorMessage == nil)
     }
 
-    private func makeViewModel() -> (model: ImportViewModel, directory: URL) {
-        let directory = URL.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
-        return (ImportViewModel(storage: SampleStorage(directory: directory)), directory)
+    @Test("The grid follows the tempo detected in the file name")
+    func gridFromFileNameTempo() async throws {
+        let harness: Harness = .init()
+        defer { harness.cleanUp() }
+        let source: URL = try harness.makeSourceFile(
+            named: "loop_128BPM.wav",
+            contents: WAVFixture.silence(seconds: 0.5)
+        )
+        harness.model.handlePickedFile(.success(source))
+        await harness.waitUntilInspected()
+        #expect(harness.model.grid?.secondsPerBar == 1.875)
+        #expect(harness.model.info?.tempo?.source == .fileName)
+    }
+}
+
+private struct Harness {
+    let model: ImportViewModel
+    let root: URL
+
+    init() {
+        let root: URL = URL.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
+        self.root = root
+        self.model = .init(
+            storage: .init(directory: root.appending(path: "Imported", directoryHint: .isDirectory)),
+            inspector: .init()
+        )
     }
 
-    private func makeSourceFile(named name: String) throws -> URL {
-        let directory = URL.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
+    func makeSourceFile(named name: String, contents: Data = Data("RIFF".utf8)) throws -> URL {
+        let directory: URL = root.appending(path: "Source-\(UUID().uuidString)", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let url = directory.appending(path: name)
-        try Data("RIFF".utf8).write(to: url)
+        let url: URL = directory.appending(path: name)
+        try contents.write(to: url)
         return url
     }
 
-    /// Import runs in a detached task; poll until the state leaves `.importing`.
-    private func waitUntilIdle(_ model: ImportViewModel) async {
-        for _ in 0..<100 {
-            if model.content != .importing { return }
+    func waitUntilImported() async {
+        for _ in 0..<200 {
+            if model.content != .importing {
+                return
+            }
             try? await Task.sleep(for: .milliseconds(10))
         }
+    }
+
+    /// Inspection runs after the file is stored, so wait for its outcome too.
+    func waitUntilInspected() async {
+        await waitUntilImported()
+        for _ in 0..<200 {
+            if model.info != nil {
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
+
+    func cleanUp() {
+        try? FileManager.default.removeItem(at: root)
     }
 }

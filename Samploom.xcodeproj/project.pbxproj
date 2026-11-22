@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		5A4D00000000000000000032 /* SamploomDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 5A4D00000000000000000031 /* SamploomDomain */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		5A4D00000000000000000029 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -39,6 +43,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5A4D00000000000000000032 /* SamploomDomain in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -90,6 +95,7 @@
 			);
 			name = Samploom;
 			packageProductDependencies = (
+				5A4D00000000000000000031 /* SamploomDomain */,
 			);
 			productName = Samploom;
 			productReference = 5A4D00000000000000000005 /* Samploom.app */;
@@ -146,6 +152,9 @@
 			);
 			mainGroup = 5A4D00000000000000000002;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5A4D00000000000000000030 /* XCLocalSwiftPackageReference "Packages/SamploomDomain" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5A4D00000000000000000003 /* Products */;
 			projectDirPath = "";
@@ -454,6 +463,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		5A4D00000000000000000030 /* XCLocalSwiftPackageReference "Packages/SamploomDomain" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/SamploomDomain;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5A4D00000000000000000031 /* SamploomDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SamploomDomain;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 5A4D00000000000000000001 /* Project object */;
 }
