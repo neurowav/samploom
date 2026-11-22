@@ -6,16 +6,43 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		5A4D00000000000000000029 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5A4D00000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5A4D00000000000000000004;
+			remoteInfo = Samploom;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		5A4D00000000000000000005 /* Samploom.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Samploom.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A4D0000000000000000001F /* SamploomTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SamploomTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		5A4D00000000000000000006 /* Samploom */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Samploom; sourceTree = "<group>"; };
+		5A4D00000000000000000006 /* Samploom */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Samploom;
+			sourceTree = "<group>";
+		};
+		5A4D00000000000000000020 /* SamploomTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SamploomTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		5A4D00000000000000000008 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A4D00000000000000000026 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -29,6 +56,7 @@
 			isa = PBXGroup;
 			children = (
 				5A4D00000000000000000006 /* Samploom */,
+				5A4D00000000000000000020 /* SamploomTests */,
 				5A4D00000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -37,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				5A4D00000000000000000005 /* Samploom.app */,
+				5A4D0000000000000000001F /* SamploomTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -66,6 +95,29 @@
 			productReference = 5A4D00000000000000000005 /* Samploom.app */;
 			productType = "com.apple.product-type.application";
 		};
+		5A4D00000000000000000021 /* SamploomTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5A4D00000000000000000022 /* Build configuration list for PBXNativeTarget "SamploomTests" */;
+			buildPhases = (
+				5A4D00000000000000000025 /* Sources */,
+				5A4D00000000000000000026 /* Frameworks */,
+				5A4D00000000000000000027 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5A4D00000000000000000028 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				5A4D00000000000000000020 /* SamploomTests */,
+			);
+			name = SamploomTests;
+			packageProductDependencies = (
+			);
+			productName = SamploomTests;
+			productReference = 5A4D0000000000000000001F /* SamploomTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -78,6 +130,10 @@
 				TargetAttributes = {
 					5A4D00000000000000000004 = {
 						CreatedOnToolsVersion = 27.1;
+					};
+					5A4D00000000000000000021 = {
+						CreatedOnToolsVersion = 27.1;
+						TestTargetID = 5A4D00000000000000000004;
 					};
 				};
 			};
@@ -96,12 +152,20 @@
 			projectRoot = "";
 			targets = (
 				5A4D00000000000000000004 /* Samploom */,
+				5A4D00000000000000000021 /* SamploomTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		5A4D00000000000000000009 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A4D00000000000000000027 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -118,7 +182,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		5A4D00000000000000000025 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5A4D00000000000000000028 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5A4D00000000000000000004 /* Samploom */;
+			targetProxy = 5A4D00000000000000000029 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		5A4D0000000000000000000C /* Debug */ = {
@@ -296,6 +375,54 @@
 			};
 			name = Release;
 		};
+		5A4D00000000000000000023 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.neurowav.samploom.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Samploom.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Samploom";
+			};
+			name = Debug;
+		};
+		5A4D00000000000000000024 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.neurowav.samploom.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Samploom.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Samploom";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -313,6 +440,15 @@
 			buildConfigurations = (
 				5A4D0000000000000000000E /* Debug */,
 				5A4D0000000000000000000F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5A4D00000000000000000022 /* Build configuration list for PBXNativeTarget "SamploomTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5A4D00000000000000000023 /* Debug */,
+				5A4D00000000000000000024 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

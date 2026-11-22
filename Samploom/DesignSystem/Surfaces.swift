@@ -24,12 +24,22 @@ extension View {
 /// Primary action: filled with the accent colour, full width inside its container.
 struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(Typography.headline)
-            .foregroundStyle(.onAccent)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, Metrics.Spacing.medium)
-            .background(.accent, in: .rect(cornerRadius: Metrics.Radius.chip))
-            .opacity(configuration.isPressed ? 0.8 : 1)
+        PrimaryButtonBody(configuration: configuration)
+    }
+
+    private struct PrimaryButtonBody: View {
+        let configuration: PrimaryButtonStyle.Configuration
+
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            configuration.label
+                .font(Typography.headline)
+                .foregroundStyle(.onAccent)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, Metrics.Spacing.medium)
+                .background(.accent, in: .rect(cornerRadius: Metrics.Radius.chip))
+                .opacity(isEnabled ? (configuration.isPressed ? 0.8 : 1) : 0.45)
+        }
     }
 }

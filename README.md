@@ -12,15 +12,19 @@ An audio file from Files becomes grid-aligned slices; slices are replayed as a l
 
 ## Status
 
-Early scaffold: app shell and design system. Audio features are in progress.
+Scaffold, design system and sample import. A file picked in Files is copied
+into the app container; tempo detection and slicing are next.
 
 ## Structure
 
 ```
 Samploom/
 ├── App/            App entry point and the root screen
+├── Core/Storage/   On-device copy of imported samples
 ├── DesignSystem/   Colour, type and metric tokens, shared surfaces
+├── Features/       Screen state and behaviour, one folder per feature
 └── Resources/      Asset catalog
+SamploomTests/      Unit tests for storage and screen state
 ```
 
 Tokens live in `Assets.xcassets` as semantic colours with light/dark appearances. Xcode generates typed accessors from asset names, so code writes `.foregroundStyle(.textSecondary)` or `.background(.backgroundPrimary)` and never touches raw colours or hex values. The palette is listed in `DesignSystem/PaletteGallery.swift` (Debug-only preview).
@@ -29,6 +33,7 @@ Tokens live in `Assets.xcassets` as semantic colours with light/dark appearances
 
 ```
 xcodebuild -scheme Samploom -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
+xcodebuild test -scheme Samploom -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
 ```
 
 ## Licensing
