@@ -2,7 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct RootView: View {
-    @State private var model = ImportViewModel()
+    @State private var viewModel: ImportViewModel = .init()
 
     var body: some View {
         VStack(alignment: .leading, spacing: Metrics.Spacing.xLarge) {
@@ -14,15 +14,15 @@ struct RootView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(.backgroundPrimary)
         .fileImporter(
-            isPresented: $model.isImporterPresented,
+            isPresented: $viewModel.isImporterPresented,
             allowedContentTypes: [.audio]
         ) { result in
-            model.handlePickedFile(result)
+            viewModel.handlePickedFile(result)
         }
         .alert("Import failed", isPresented: isShowingError) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(model.errorMessage ?? "")
+            Text(viewModel.errorMessage ?? "")
         }
     }
 
@@ -57,21 +57,21 @@ struct RootView: View {
             }
 
             Button(cardButtonTitle) {
-                model.chooseSample()
+                viewModel.chooseSample()
             }
             .buttonStyle(PrimaryButtonStyle())
-            .disabled(model.content == .importing)
+            .disabled(viewModel.content == .importing)
         }
         .surface()
     }
 
     private var statusIcon: some View {
         Group {
-            if model.content == .importing {
+            if viewModel.content == .importing {
                 ProgressView()
                     .tint(.accent)
             } else {
-                Image(systemName: model.content == .empty ? "waveform" : "checkmark.circle.fill")
+                Image(systemName: viewModel.content == .empty ? "waveform" : "checkmark.circle.fill")
                     .font(.system(.title2))
                     .foregroundStyle(.accent)
             }
@@ -80,7 +80,7 @@ struct RootView: View {
     }
 
     private var cardTitle: String {
-        switch model.content {
+        switch viewModel.content {
         case .empty: "No sample loaded"
         case .importing: "Importing…"
         case .imported: "Sample ready"
@@ -88,7 +88,7 @@ struct RootView: View {
     }
 
     private var cardSubtitle: String {
-        switch model.content {
+        switch viewModel.content {
         case .empty: "Import a WAV, AIFF or MP3 file from Files."
         case .importing: "Copying the file into the app."
         case .imported(let sample): sample.displayName
@@ -96,7 +96,7 @@ struct RootView: View {
     }
 
     private var cardButtonTitle: String {
-        switch model.content {
+        switch viewModel.content {
         case .empty: "Import sample"
         case .importing: "Importing…"
         case .imported: "Replace sample"
@@ -105,10 +105,10 @@ struct RootView: View {
 
     private var isShowingError: Binding<Bool> {
         Binding(
-            get: { model.errorMessage != nil },
+            get: { viewModel.errorMessage != nil },
             set: { isPresented in
                 if !isPresented {
-                    model.errorMessage = nil
+                    viewModel.errorMessage = nil
                 }
             }
         )
