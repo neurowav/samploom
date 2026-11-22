@@ -2,8 +2,10 @@ import Foundation
 
 /// Builds minimal PCM WAV data so AVFoundation has something real to read.
 enum WAVFixture {
-    static func silence(seconds: Double, sampleRate: Int = 44_100) -> Data {
-        wav(samples: Array(repeating: 0, count: frameCount(seconds: seconds, sampleRate: sampleRate)), sampleRate: sampleRate)
+    static func silence(seconds: Double, channels: Int = 1, sampleRate: Int = 44_100) -> Data {
+        let frames: Int = frameCount(seconds: seconds, sampleRate: sampleRate)
+        let empty: [Int16] = Array(repeating: 0, count: frames)
+        return wav(channels: Array(repeating: empty, count: channels), sampleRate: sampleRate)
     }
 
     static func tone(
@@ -12,14 +14,30 @@ enum WAVFixture {
         amplitude: Double = 0.5,
         sampleRate: Int = 44_100
     ) -> Data {
+        tone(
+            seconds: seconds,
+            frequency: frequency,
+            amplitudes: [amplitude],
+            sampleRate: sampleRate
+        )
+    }
+
+    /// One amplitude per channel, so a stereo file can carry a different level
+    /// on each side.
+    static func tone(
+        seconds: Double,
+        frequency: Double = 440,
+        amplitudes: [Double],
+        sampleRate: Int = 44_100
+    ) -> Data {
         let frames: Int = frameCount(seconds: seconds, sampleRate: sampleRate)
-        var samples: [Int16] = []
-        samples.reserveCapacity(frames)
-        for frame in 0..<frames {
-            let value: Double = sin(2 * .pi * frequency * Double(frame) / Double(sampleRate)) * amplitude
-            samples.append(Int16(max(-1, min(1, value)) * Double(Int16.max)))
+        let channels: [[Int16]] = amplitudes.map { amplitude in
+            (0..<frames).map { frame in
+                let value: Double = sin(2 * .pi * frequency * Double(frame) / Double(sampleRate)) * amplitude
+                return Int16(max(-1, min(1, value)) * Double(Int16.max))
+            }
         }
-        return wav(samples: samples, sampleRate: sampleRate)
+        return wav(channels: channels, sampleRate: sampleRate)
     }
 
     static func write(_ data: Data, named name: String) throws -> URL {
@@ -38,8 +56,10 @@ enum WAVFixture {
         Int(Double(sampleRate) * seconds)
     }
 
-    private static func wav(samples: [Int16], sampleRate: Int) -> Data {
-        let dataSize: Int = samples.count * 2
+    private static func wav(channels: [[Int16]], sampleRate: Int) -> Data {
+        let channelCount: Int = channels.count
+        let frames: Int = channels.first?.count ?? 0
+        let dataSize: Int = frames * channelCount * 2
         var data: Data = .init()
         data.append(contentsOf: Array("RIFF".utf8))
         data.append(littleEndian: UInt32(36 + dataSize))
@@ -47,15 +67,17 @@ enum WAVFixture {
         data.append(contentsOf: Array("fmt ".utf8))
         data.append(littleEndian: UInt32(16))
         data.append(littleEndian: UInt16(1))
-        data.append(littleEndian: UInt16(1))
+        data.append(littleEndian: UInt16(channelCount))
         data.append(littleEndian: UInt32(sampleRate))
-        data.append(littleEndian: UInt32(sampleRate * 2))
-        data.append(littleEndian: UInt16(2))
+        data.append(littleEndian: UInt32(sampleRate * channelCount * 2))
+        data.append(littleEndian: UInt16(channelCount * 2))
         data.append(littleEndian: UInt16(16))
         data.append(contentsOf: Array("data".utf8))
         data.append(littleEndian: UInt32(dataSize))
-        for sample in samples {
-            data.append(littleEndian: UInt16(bitPattern: sample))
+        for frame in 0..<frames {
+            for channel in channels {
+                data.append(littleEndian: UInt16(bitPattern: channel[frame]))
+            }
         }
         return data
     }

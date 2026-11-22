@@ -15,9 +15,9 @@ An audio file from Files becomes grid-aligned slices; slices are replayed as a l
 Scaffold, design system, sample import, tempo detection, the musical grid and
 slice planning. A file picked in Files is copied into the app container, its
 BPM is read from tags or from the name (90 BPM is assumed when nothing is
-found), audio is decoded, and the screen draws the waveform with the slice
-windows on top. Silent positions are skipped so a slice is never empty.
-Playback is next.
+found), and audio is decoded once: channels stay separate, the rate is
+normalised to 48 kHz. The screen draws the waveform with the slice windows on
+top; silent positions are skipped so a slice is never empty. Playback is next.
 
 ## Signing
 

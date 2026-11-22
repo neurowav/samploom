@@ -1,28 +1,42 @@
 import Foundation
 
-/// Decoded audio plus what the screen needs: waveform peaks for drawing and a
-/// mono mixdown for checking whether a slice carries any audible content.
+/// Decoded audio plus what the screen needs: waveform peaks for drawing and
+/// per-channel samples for loudness checks and, later, slicing.
+///
+/// Channels are kept as they were in the file: a mono mixdown would lose
+/// stereo width, and summing channels for analysis would hide audible
+/// out-of-phase material.
 nonisolated struct DecodedSample: Sendable {
     /// About -60 dBFS: below this a slice counts as digital silence.
     static let silenceThreshold: Float = 0.001
+    /// Engine and export rate. Files in other rates are converted once, on import.
+    static let targetSampleRate: Double = 48_000
 
-    let duration: TimeInterval
     let sampleRate: Double
-    /// Peaks normalised to 0...1, one per waveform bin.
+    /// One array per channel, float samples in -1...1.
+    let channels: [[Float]]
+    /// Peaks normalised to 0...1, one per waveform bin, taken across all channels.
     let waveform: [Float]
-    /// Mono mixdown in -1...1.
-    let samples: [Float]
 
-    /// True when the window has no sample above the silence threshold, which
-    /// is the case that must never become a slice.
+    var frameCount: Int {
+        channels.first?.count ?? 0
+    }
+
+    var duration: TimeInterval {
+        sampleRate > 0 ? Double(frameCount) / sampleRate : 0
+    }
+
+    /// True when no channel has a sample above the silence threshold in the
+    /// window, which is the case that must never become a slice.
     func isSilent(startingAt start: TimeInterval, length: TimeInterval) -> Bool {
         let lower: Int = max(0, Int((start * sampleRate).rounded(.down)))
-        let upper: Int = min(samples.count, Int(((start + length) * sampleRate).rounded(.up)))
+        let upper: Int = min(frameCount, Int(((start + length) * sampleRate).rounded(.up)))
         guard lower < upper else { return true }
-        var peak: Float = 0
-        for index in lower..<upper {
-            peak = max(peak, abs(samples[index]))
+        for channel in channels {
+            for index in lower..<upper where abs(channel[index]) >= Self.silenceThreshold {
+                return false
+            }
         }
-        return peak < Self.silenceThreshold
+        return true
     }
 }
