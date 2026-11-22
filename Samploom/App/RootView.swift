@@ -103,7 +103,21 @@ struct RootView: View {
                 }
             }
 
-            valueRow(title: "Tempo", value: tempoText)
+            HStack(alignment: .center) {
+                Text("Tempo")
+                    .font(Typography.body)
+                    .foregroundStyle(.textSecondary)
+
+                Spacer()
+
+                Text(tempoText)
+                    .font(Typography.numeric)
+                    .foregroundStyle(.textPrimary)
+
+                Stepper("", value: $viewModel.tempoBPM, in: Tempo.supportedRange, step: 1)
+                    .labelsHidden()
+            }
+
             valueRow(title: "Bar", value: secondsText(grid.secondsPerBar))
             valueRow(title: "Step", value: secondsText(grid.step(for: viewModel.division)))
             valueRow(title: "Repeat", value: "\(viewModel.repeats) × \(viewModel.barsPerSlice) bar")
@@ -205,6 +219,9 @@ struct RootView: View {
     }
 
     private var tempoSourceText: String {
+        if viewModel.isTempoManual {
+            return "Tempo set manually."
+        }
         guard let source: DetectedTempo.Source = viewModel.info?.tempo?.source else {
             return "Tempo assumed: no BPM in the file tags or its name."
         }

@@ -19,6 +19,8 @@ final class ImportViewModel {
     var division: GridDivision = .bar
     var mode: SliceMode = .single
     private(set) var seed: UInt64 = .random(in: UInt64.min...UInt64.max)
+    /// Set when the user types a tempo; cleared on the next import.
+    private(set) var manualTempo: Tempo?
 
     let barsPerSlice: Int = 1
     let repeats: Int = 4
@@ -43,11 +45,25 @@ final class ImportViewModel {
     /// working with an assumed one instead of blocking the slice step.
     var grid: MusicalGrid? {
         guard let info else { return nil }
-        return .init(tempo: info.tempo?.tempo ?? .assumed)
+        return .init(tempo: manualTempo ?? info.tempo?.tempo ?? .assumed)
     }
 
     var isTempoAssumed: Bool {
-        info != nil && info?.tempo == nil
+        info != nil && manualTempo == nil && info?.tempo == nil
+    }
+
+    var isTempoManual: Bool {
+        manualTempo != nil
+    }
+
+    /// Tempo shown and edited on screen; out-of-range input is clamped.
+    var tempoBPM: Double {
+        get { grid?.tempo.beatsPerMinute ?? Tempo.assumed.beatsPerMinute }
+        set {
+            let range: ClosedRange<Double> = Tempo.supportedRange
+            let clamped: Double = min(max(newValue, range.lowerBound), range.upperBound)
+            manualTempo = try? .init(beatsPerMinute: clamped)
+        }
     }
 
     /// Slice plan for the current settings, or `nil` while audio is still decoding.
@@ -91,6 +107,7 @@ final class ImportViewModel {
         content = .importing
         info = nil
         decoded = nil
+        manualTempo = nil
         Task {
             do {
                 let sample: ImportedSample = try await storage.importFile(at: url)

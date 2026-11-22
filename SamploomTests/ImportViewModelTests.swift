@@ -88,6 +88,60 @@ struct ImportViewModelTests {
         #expect(harness.model.plan?.isEmpty == true)
     }
 
+    @Test("A manual tempo overrides the detected one and rebuilds the grid")
+    func manualTempoOverridesDetection() async throws {
+        let harness: Harness = .init()
+        defer { harness.cleanUp() }
+        let source: URL = try harness.makeSourceFile(
+            named: "loop_100BPM.wav",
+            contents: WAVFixture.tone(seconds: 4, amplitude: 0.6)
+        )
+        harness.model.handlePickedFile(.success(source))
+        await harness.waitUntilInspected()
+        #expect(harness.model.grid?.secondsPerBar == 2.4)
+        harness.model.tempoBPM = 120
+        #expect(harness.model.grid?.secondsPerBar == 2.0)
+        #expect(harness.model.isTempoManual)
+    }
+
+    @Test("A manual tempo outside the range is clamped")
+    func manualTempoIsClamped() async throws {
+        let harness: Harness = .init()
+        defer { harness.cleanUp() }
+        let source: URL = try harness.makeSourceFile(
+            named: "loop.wav",
+            contents: WAVFixture.tone(seconds: 2, amplitude: 0.6)
+        )
+        harness.model.handlePickedFile(.success(source))
+        await harness.waitUntilInspected()
+        harness.model.tempoBPM = 5_000
+        #expect(harness.model.tempoBPM == Tempo.supportedRange.upperBound)
+        harness.model.tempoBPM = 0
+        #expect(harness.model.tempoBPM == Tempo.supportedRange.lowerBound)
+    }
+
+    @Test("Importing another sample drops the manual tempo")
+    func newImportResetsManualTempo() async throws {
+        let harness: Harness = .init()
+        defer { harness.cleanUp() }
+        let first: URL = try harness.makeSourceFile(
+            named: "first.wav",
+            contents: WAVFixture.tone(seconds: 2, amplitude: 0.6)
+        )
+        let second: URL = try harness.makeSourceFile(
+            named: "second_100BPM.wav",
+            contents: WAVFixture.tone(seconds: 2, amplitude: 0.6)
+        )
+        harness.model.handlePickedFile(.success(first))
+        await harness.waitUntilInspected()
+        harness.model.tempoBPM = 140
+        #expect(harness.model.isTempoManual)
+        harness.model.handlePickedFile(.success(second))
+        await harness.waitUntilInspected()
+        #expect(harness.model.isTempoManual == false)
+        #expect(harness.model.tempoBPM == 100)
+    }
+
     @Test("Reshuffling changes the seed")
     func reshuffleChangesSeed() async {
         let harness: Harness = .init()
