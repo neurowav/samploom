@@ -11,27 +11,26 @@ final class ImportViewModel {
         case imported(ImportedSample)
     }
 
+    private(set) var loaded: LoadedSample?
     private(set) var content: Content = .empty
-    private(set) var info: SampleInfo?
-    private(set) var decoded: DecodedSample?
     var isImporterPresented: Bool = false
     var errorMessage: String?
     var division: GridDivision = .bar
     var mode: SliceMode = .single
     /// Moves the grid origin inside the bar, for samples that do not start on a downbeat.
     var gridOffset: TimeInterval = 0
+    /// Length of one slice and how many repeats the plan contains.
+    let barsPerSlice: Int = 1
+    let repeats: Int = 4
     private(set) var seed: UInt64 = .random(in: UInt64.min...UInt64.max)
     /// Set when the user types a tempo; cleared on the next import.
     private(set) var manualTempo: Tempo?
-
-    let barsPerSlice: Int = 1
-    let repeats: Int = 4
 
     private let storage: SampleStorage
     private let inspector: SampleInspector
     private let decoder: SampleDecoder
     private let planner: SlicePlanner = .init()
-    private var currentSample: ImportedSample?
+    private var pendingSample: ImportedSample?
 
     init(
         storage: SampleStorage = .init(),
@@ -43,15 +42,23 @@ final class ImportViewModel {
         self.decoder = decoder
     }
 
+    var currentSample: ImportedSample? {
+        loaded?.sample
+    }
+
+    var info: SampleInfo? {
+        loaded?.info
+    }
+
+    var decoded: DecodedSample? {
+        loaded?.decoded
+    }
+
     /// Grid for the loaded sample. When the file carries no tempo the app keeps
     /// working with an assumed one instead of blocking the slice step.
     var grid: MusicalGrid? {
         guard let info else { return nil }
         return .init(tempo: manualTempo ?? info.tempo?.tempo ?? .assumed)
-    }
-
-    var isTempoAssumed: Bool {
-        info != nil && manualTempo == nil && info?.tempo == nil
     }
 
     var isTempoManual: Bool {
@@ -96,6 +103,7 @@ final class ImportViewModel {
     }
 
     func chooseSample() {
+        guard content != .importing else { return }
         isImporterPresented = true
     }
 
@@ -114,41 +122,37 @@ final class ImportViewModel {
         }
     }
 
+    /// The sample currently on screen stays untouched until the new file has
+    /// been copied and analysed: collapsing it first would read as a flicker the
+    /// moment the picker closes.
     private func importSample(from url: URL) {
         content = .importing
-        info = nil
-        decoded = nil
-        manualTempo = nil
-        gridOffset = 0
         Task {
             do {
                 let sample: ImportedSample = try await storage.importFile(at: url)
-                await discardCurrentSample()
-                currentSample = sample
+                pendingSample = sample
+                let inspected: SampleInfo? = try? await inspector.inspect(
+                    fileAt: sample.url,
+                    originalFileName: sample.displayName
+                )
+                let decodedSample: DecodedSample? = try? await decoder.decode(fileAt: sample.url)
+                guard pendingSample == sample else {
+                    try? await storage.remove(sample)
+                    return
+                }
+                let previous: ImportedSample? = loaded?.sample
+                loaded = .init(sample: sample, info: inspected, decoded: decodedSample)
+                manualTempo = nil
+                gridOffset = 0
+                pendingSample = nil
+                if let previous {
+                    try? await storage.remove(previous)
+                }
                 content = .imported(sample)
-                await analyse(sample)
             } catch {
-                content = currentSample.map(Content.imported) ?? .empty
+                content = loaded.map { .imported($0.sample) } ?? .empty
                 errorMessage = error.localizedDescription
             }
         }
-    }
-
-    private func analyse(_ sample: ImportedSample) async {
-        let inspected: SampleInfo? = try? await inspector.inspect(
-            fileAt: sample.url,
-            originalFileName: sample.displayName
-        )
-        let decodedSample: DecodedSample? = try? await decoder.decode(fileAt: sample.url)
-        guard currentSample == sample else { return }
-        info = inspected
-        decoded = decodedSample
-    }
-
-    /// Keeps a single sample around: replacing it must not leave orphaned copies.
-    private func discardCurrentSample() async {
-        guard let currentSample else { return }
-        try? await storage.remove(currentSample)
-        self.currentSample = nil
     }
 }

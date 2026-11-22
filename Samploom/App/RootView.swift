@@ -6,16 +6,21 @@ struct RootView: View {
     @State private var viewModel: ImportViewModel = .init()
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Metrics.Spacing.xLarge) {
-                header
-                sampleCard
-                gridCard
+        ZStack {
+            Rectangle()
+                .fill(.backgroundPrimary)
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: Metrics.Spacing.xLarge) {
+                    header
+                    sampleCard
+                    gridCard
+                }
+                .padding(Metrics.Spacing.large)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(Metrics.Spacing.large)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(.backgroundPrimary)
         .fileImporter(
             isPresented: $viewModel.isImporterPresented,
             allowedContentTypes: [.audio]
@@ -63,20 +68,15 @@ struct RootView: View {
                 viewModel.chooseSample()
             }
             .buttonStyle(PrimaryButtonStyle())
-            .disabled(viewModel.content == .importing)
         }
         .surface()
     }
 
     @ViewBuilder
     private var gridCard: some View {
-        switch viewModel.content {
-        case .empty, .importing:
-            EmptyView()
-        case .imported:
-            if let grid: MusicalGrid = viewModel.grid {
-                sliceCard(grid: grid)
-            }
+        if let grid: MusicalGrid = viewModel.grid {
+            sliceCard(grid: grid)
+                .allowsHitTesting(viewModel.content != .importing)
         }
     }
 
@@ -138,8 +138,6 @@ struct RootView: View {
                     .tint(.accent)
             }
 
-            valueRow(title: "Repeat", value: "\(viewModel.repeats) × \(viewModel.barsPerSlice) bar")
-
             Divider()
                 .background(.hairline)
 
@@ -195,40 +193,22 @@ struct RootView: View {
     }
 
     private var statusIcon: some View {
-        Group {
-            if viewModel.content == .importing {
-                ProgressView()
-                    .tint(.accent)
-            } else {
-                Image(systemName: viewModel.content == .empty ? "waveform" : "checkmark.circle.fill")
-                    .font(.system(.title2))
-                    .foregroundStyle(.accent)
-            }
-        }
-        .frame(width: Metrics.Spacing.xxLarge, height: Metrics.Spacing.xxLarge)
+        Image(systemName: viewModel.currentSample == nil ? "waveform" : "checkmark.circle.fill")
+            .font(.system(.title2))
+            .foregroundStyle(.accent)
+            .frame(width: Metrics.Spacing.xxLarge, height: Metrics.Spacing.xxLarge)
     }
 
     private var cardTitle: String {
-        switch viewModel.content {
-        case .empty:
-            return "No sample loaded"
-        case .importing:
-            return "Importing…"
-        case .imported:
-            return "Sample ready"
-        }
+        viewModel.currentSample == nil ? "No sample loaded" : "Sample ready"
     }
 
     private var cardSubtitle: String {
-        switch viewModel.content {
-        case .empty:
+        guard let sample: ImportedSample = viewModel.currentSample else {
             return "Import a WAV, AIFF or MP3 file from Files."
-        case .importing:
-            return "Copying the file into the app."
-        case .imported(let sample):
-            guard let duration: TimeInterval = viewModel.info?.duration else { return sample.displayName }
-            return "\(sample.displayName) · \(secondsText(duration))"
         }
+        guard let duration: TimeInterval = viewModel.info?.duration else { return sample.displayName }
+        return "\(sample.displayName) · \(secondsText(duration))"
     }
 
     private var tempoText: String {
@@ -252,14 +232,7 @@ struct RootView: View {
     }
 
     private var cardButtonTitle: String {
-        switch viewModel.content {
-        case .empty:
-            return "Import sample"
-        case .importing:
-            return "Importing…"
-        case .imported:
-            return "Replace sample"
-        }
+        viewModel.currentSample == nil ? "Import sample" : "Replace sample"
     }
 
     private func divisionTitle(_ division: GridDivision) -> String {

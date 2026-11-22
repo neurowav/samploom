@@ -174,6 +174,28 @@ struct ImportViewModelTests {
         #expect(harness.model.effectiveGridOffset < 2)
     }
 
+    @Test("The previous sample stays on screen while the next one is imported")
+    func previousSampleSurvivesWhileImporting() async throws {
+        let harness: Harness = .init()
+        defer { harness.cleanUp() }
+        let first: URL = try harness.makeSourceFile(
+            named: "first_120BPM.wav",
+            contents: WAVFixture.tone(seconds: 2, amplitude: 0.6)
+        )
+        let second: URL = try harness.makeSourceFile(
+            named: "second_100BPM.wav",
+            contents: WAVFixture.tone(seconds: 2, amplitude: 0.6)
+        )
+        harness.model.handlePickedFile(.success(first))
+        await harness.waitUntilDecoded()
+        let previousInfo: SampleInfo = try #require(harness.model.info)
+        harness.model.handlePickedFile(.success(second))
+        #expect(harness.model.content == .importing)
+        #expect(harness.model.info == previousInfo)
+        #expect(harness.model.grid != nil)
+        await harness.waitUntilDecoded()
+    }
+
     @Test("Reshuffling changes the seed")
     func reshuffleChangesSeed() async {
         let harness: Harness = .init()
