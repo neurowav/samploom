@@ -96,6 +96,11 @@ struct RootView: View {
 
             if let decoded: DecodedSample = viewModel.decoded {
                 WaveformView(sample: decoded, plan: viewModel.plan)
+                if decoded.isTruncated {
+                    Text("Only the first \(Int(DecodedSample.maxDuration)) s of the file are used.")
+                        .font(Typography.caption)
+                        .foregroundStyle(.textSecondary)
+                }
             }
 
             valueRow(title: "Tempo", value: tempoText)
@@ -130,6 +135,10 @@ struct RootView: View {
                     viewModel.reshuffle()
                 }
                 .buttonStyle(SecondaryButtonStyle())
+
+                Text("Slices are cut with \(fadeText) fades so the joins never click.")
+                    .font(Typography.caption)
+                    .foregroundStyle(.textSecondary)
             }
 
             Text(tempoSourceText)
@@ -233,6 +242,10 @@ struct RootView: View {
 
     private func secondsText(_ seconds: Double) -> String {
         String(format: "%.3f s", seconds)
+    }
+
+    private var fadeText: String {
+        "\(Int((SliceRenderer.defaultFadeDuration * 1_000).rounded())) ms"
     }
 
     private var isShowingError: Binding<Bool> {

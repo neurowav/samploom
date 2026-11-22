@@ -16,8 +16,10 @@ Scaffold, design system, sample import, tempo detection, the musical grid and
 slice planning. A file picked in Files is copied into the app container, its
 BPM is read from tags or from the name (90 BPM is assumed when nothing is
 found), and audio is decoded once: channels stay separate, the rate is
-normalised to 48 kHz. The screen draws the waveform with the slice windows on
-top; silent positions are skipped so a slice is never empty. Playback is next.
+normalised to 48 kHz, and files longer than 40 s are cut to their first 40 s.
+The screen draws the waveform with the slice windows on top; silent positions
+are skipped so a slice is never empty. `SliceRenderer` cuts the planned slices
+and bakes 8 ms fades into their edges. Playback is next.
 
 ## Signing
 

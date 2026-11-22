@@ -15,12 +15,18 @@ actor SampleDecoder {
         }
     }
 
-    func decode(fileAt url: URL, waveformBins: Int = 512) throws -> DecodedSample {
+    func decode(
+        fileAt url: URL,
+        waveformBins: Int = 512,
+        maxDuration: TimeInterval = DecodedSample.maxDuration
+    ) throws -> DecodedSample {
         let file: AVAudioFile = try .init(forReading: url)
         let format: AVAudioFormat = file.processingFormat
-        guard file.length > 0, format.channelCount > 0, let input: AVAudioPCMBuffer = .init(
+        let maxSourceFrames: AVAudioFramePosition = AVAudioFramePosition(maxDuration * format.sampleRate)
+        let sourceFrames: AVAudioFramePosition = min(file.length, maxSourceFrames)
+        guard sourceFrames > 0, format.channelCount > 0, let input: AVAudioPCMBuffer = .init(
             pcmFormat: format,
-            frameCapacity: AVAudioFrameCount(file.length)
+            frameCapacity: AVAudioFrameCount(sourceFrames)
         ) else {
             throw Failure.unreadableFormat
         }
@@ -34,7 +40,8 @@ actor SampleDecoder {
         return .init(
             sampleRate: DecodedSample.targetSampleRate,
             channels: channels,
-            waveform: Self.waveform(from: channels, bins: waveformBins)
+            waveform: Self.waveform(from: channels, bins: waveformBins),
+            isTruncated: file.length > maxSourceFrames
         )
     }
 

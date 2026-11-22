@@ -43,6 +43,25 @@ struct SampleDecoderTests {
         #expect(decoded.frameCount == decoded.channels[0].count)
     }
 
+    @Test("A file longer than the limit is truncated")
+    func truncatesLongFiles() async throws {
+        let url: URL = try WAVFixture.write(WAVFixture.tone(seconds: 2, sampleRate: 48_000), named: "long.wav")
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        let decoder: SampleDecoder = .init()
+        let decoded: DecodedSample = try await decoder.decode(fileAt: url, maxDuration: 1)
+        #expect(abs(decoded.duration - 1) < 0.01)
+        #expect(decoded.isTruncated)
+    }
+
+    @Test("A file within the limit is kept whole")
+    func keepsShortFiles() async throws {
+        let url: URL = try WAVFixture.write(WAVFixture.tone(seconds: 0.5, sampleRate: 48_000), named: "short.wav")
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        let decoder: SampleDecoder = .init()
+        let decoded: DecodedSample = try await decoder.decode(fileAt: url)
+        #expect(decoded.isTruncated == false)
+    }
+
     @Test("Silence decodes to a silent sample")
     func decodesSilence() async throws {
         let url: URL = try WAVFixture.writeSilence(seconds: 0.2, named: "silence.wav")

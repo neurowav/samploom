@@ -11,12 +11,17 @@ nonisolated struct DecodedSample: Sendable {
     static let silenceThreshold: Float = 0.001
     /// Engine and export rate. Files in other rates are converted once, on import.
     static let targetSampleRate: Double = 48_000
+    /// Long files are cut on import: a few minutes of stereo samples would sit
+    /// in memory as hundreds of megabytes, and loops are much shorter.
+    static let maxDuration: TimeInterval = 40
 
     let sampleRate: Double
     /// One array per channel, float samples in -1...1.
     let channels: [[Float]]
     /// Peaks normalised to 0...1, one per waveform bin, taken across all channels.
     let waveform: [Float]
+    /// True when the file was longer than `maxDuration` and only its head is kept.
+    let isTruncated: Bool
 
     var frameCount: Int {
         channels.first?.count ?? 0

@@ -8,7 +8,8 @@ struct DecodedSampleTests {
     private let silentSample: DecodedSample = .init(
         sampleRate: 100,
         channels: [Array(repeating: 0, count: 100)],
-        waveform: []
+        waveform: [],
+        isTruncated: false
     )
 
     @Test("Digital silence is detected")
@@ -21,7 +22,7 @@ struct DecodedSampleTests {
     func detectsTone() {
         var channel: [Float] = Array(repeating: 0, count: 100)
         channel[80] = 0.5
-        let decoded: DecodedSample = .init(sampleRate: 100, channels: [channel], waveform: [])
+        let decoded: DecodedSample = .init(sampleRate: 100, channels: [channel], waveform: [], isTruncated: false)
         #expect(decoded.isSilent(startingAt: 0, length: 0.5))
         #expect(decoded.isSilent(startingAt: 0.75, length: 0.25) == false)
     }
@@ -32,7 +33,7 @@ struct DecodedSampleTests {
         var right: [Float] = Array(repeating: 0, count: 100)
         left[10] = 0.5
         right[10] = -0.5
-        let decoded: DecodedSample = .init(sampleRate: 100, channels: [left, right], waveform: [])
+        let decoded: DecodedSample = .init(sampleRate: 100, channels: [left, right], waveform: [], isTruncated: false)
         #expect(decoded.isSilent(startingAt: 0, length: 0.5) == false)
     }
 
@@ -47,7 +48,8 @@ struct DecodedSampleTests {
         let decoded: DecodedSample = .init(
             sampleRate: 100,
             channels: [Array(repeating: 0, count: 250)],
-            waveform: []
+            waveform: [],
+            isTruncated: false
         )
         #expect(decoded.duration == 2.5)
     }
