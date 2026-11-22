@@ -39,14 +39,32 @@ struct SliceRendererTests {
         #expect(slice.channels[0][4] < slice.channels[0][5])
     }
 
-    @Test("A window past the end is zero-padded, not shortened")
+    @Test("A window past the end is zero-padded when wrapping is off")
     func padsPastTheEnd() {
         let channel: [Float] = Array(repeating: 0.5, count: 500)
         let plan: SlicePlan = .init(sliceLength: 1, starts: [0])
-        let slices: [SliceAudio] = renderer.render(plan: plan, channels: [channel], sampleRate: sampleRate)
+        let slices: [SliceAudio] = renderer.render(
+            plan: plan,
+            channels: [channel],
+            sampleRate: sampleRate,
+            wraps: false
+        )
         let slice: SliceAudio = slices[0]
         #expect(slice.frameCount == 1_000)
         #expect(slice.channels[0][700] == 0)
+    }
+
+    @Test("A window past the end continues from the beginning when wrapping is on")
+    func wrapsPastTheEnd() {
+        let channel: [Float] = (0..<500).map { _ in 0.5 }
+        let plan: SlicePlan = .init(sliceLength: 1, starts: [0.2])
+        let slices: [SliceAudio] = renderer.render(plan: plan, channels: [channel], sampleRate: sampleRate)
+        let slice: SliceAudio = slices[0]
+        #expect(slice.frameCount == 1_000)
+        // 0.2 s in: 300 frames are left, the next 500 come from the beginning,
+        // and the rest of the window stays silent because one pass is not enough.
+        #expect(slice.channels[0][350] == 0.5)
+        #expect(slice.channels[0][900] == 0)
     }
 
     @Test("Fades are capped at half the slice")

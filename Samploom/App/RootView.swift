@@ -120,6 +120,24 @@ struct RootView: View {
 
             valueRow(title: "Bar", value: secondsText(grid.secondsPerBar))
             valueRow(title: "Step", value: secondsText(grid.step(for: viewModel.division)))
+
+            VStack(alignment: .leading, spacing: Metrics.Spacing.xSmall) {
+                HStack {
+                    Text("Offset")
+                        .font(Typography.body)
+                        .foregroundStyle(.textSecondary)
+
+                    Spacer()
+
+                    Text(offsetText)
+                        .font(Typography.numeric)
+                        .foregroundStyle(.textPrimary)
+                }
+
+                Slider(value: $viewModel.gridOffset, in: 0...max(0.001, grid.secondsPerBar - 0.001))
+                    .tint(.accent)
+            }
+
             valueRow(title: "Repeat", value: "\(viewModel.repeats) × \(viewModel.barsPerSlice) bar")
 
             Divider()
@@ -263,6 +281,10 @@ struct RootView: View {
 
     private var fadeText: String {
         "\(Int((SliceRenderer.defaultFadeDuration * 1_000).rounded())) ms"
+    }
+
+    private var offsetText: String {
+        "\(Int((viewModel.effectiveGridOffset * 1_000).rounded())) ms"
     }
 
     private var isShowingError: Binding<Bool> {

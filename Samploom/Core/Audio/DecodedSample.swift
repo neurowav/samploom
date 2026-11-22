@@ -32,16 +32,26 @@ nonisolated struct DecodedSample: Sendable {
     }
 
     /// True when no channel has a sample above the silence threshold in the
-    /// window, which is the case that must never become a slice.
-    func isSilent(startingAt start: TimeInterval, length: TimeInterval) -> Bool {
+    /// window, which is the case that must never become a slice. With `wraps`
+    /// the window continues from the beginning of the sample.
+    func isSilent(startingAt start: TimeInterval, length: TimeInterval, wraps: Bool = false) -> Bool {
         let lower: Int = max(0, Int((start * sampleRate).rounded(.down)))
-        let upper: Int = min(frameCount, Int(((start + length) * sampleRate).rounded(.up)))
+        let upper: Int = Int(((start + length) * sampleRate).rounded(.up))
         guard lower < upper else { return true }
+        if hasAudibleContent(from: lower, to: min(upper, frameCount)) {
+            return false
+        }
+        guard wraps, upper > frameCount else { return true }
+        return hasAudibleContent(from: 0, to: upper - frameCount) == false
+    }
+
+    private func hasAudibleContent(from lower: Int, to upper: Int) -> Bool {
+        guard lower < upper else { return false }
         for channel in channels {
             for index in lower..<upper where abs(channel[index]) >= Self.silenceThreshold {
-                return false
+                return true
             }
         }
-        return true
+        return false
     }
 }

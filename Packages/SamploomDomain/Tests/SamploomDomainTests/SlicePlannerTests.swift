@@ -22,7 +22,7 @@ struct SlicePlannerTests {
         #expect(plan.sliceLength == grid.secondsPerBar)
         let start: TimeInterval = plan.starts[0]
         #expect(isOnGrid(start, step: grid.step(for: .bar)))
-        #expect(start + plan.sliceLength <= 8.000_001)
+        #expect(start < 8)
     }
 
     @Test("Random mode gives different starts on the grid")
@@ -83,6 +83,31 @@ struct SlicePlannerTests {
     func shortSample() {
         let plan: SlicePlan = planner.plan(mode: .single, grid: grid, duration: 0.5, repeats: 4, seed: 1)
         #expect(plan.starts == [0, 0, 0, 0])
+    }
+
+    @Test("The offset shifts every start and keeps them inside the file")
+    func offsetShiftsStarts() {
+        let offset: TimeInterval = 0.5
+        let plan: SlicePlan = planner.plan(
+            mode: .random,
+            grid: grid,
+            duration: 20,
+            repeats: 4,
+            seed: 11,
+            offset: offset
+        )
+        #expect(plan.starts.count == 4)
+        for start in plan.starts {
+            #expect(start >= offset)
+            #expect(start < 20)
+            #expect(start.truncatingRemainder(dividingBy: grid.secondsPerBar) - offset < 0.000_001)
+        }
+    }
+
+    @Test("An offset past the file gives no plan")
+    func offsetPastTheEnd() {
+        let plan: SlicePlan = planner.plan(mode: .single, grid: grid, duration: 2, repeats: 4, seed: 1, offset: 5)
+        #expect(plan.isEmpty)
     }
 
     /// Floating point: a start can land a hair below the step, so compare both sides.

@@ -7,9 +7,9 @@ import Foundation
 /// for zero crossings, and baking them here keeps playback trivial — the player
 /// only has to schedule finished buffers.
 ///
-/// A slice is always exactly as long as the plan says. If the tail runs past
-/// the end of the sample it is zero-padded rather than shortened, so repeats
-/// keep an even length and the player never has to guess.
+/// With `wraps` enabled a slice that runs past the end of the sample continues
+/// from its beginning, which is what a loop wants. Otherwise the tail is
+/// zero-padded, so a slice is always exactly as long as the plan says.
 public struct SliceRenderer: Sendable {
     public static let defaultFadeDuration: TimeInterval = 0.008
 
@@ -19,7 +19,12 @@ public struct SliceRenderer: Sendable {
         self.fadeDuration = max(0, fadeDuration)
     }
 
-    public func render(plan: SlicePlan, channels: [[Float]], sampleRate: Double) -> [SliceAudio] {
+    public func render(
+        plan: SlicePlan,
+        channels: [[Float]],
+        sampleRate: Double,
+        wraps: Bool = true
+    ) -> [SliceAudio] {
         let frameCount: Int = channels.first?.count ?? 0
         guard sampleRate > 0, frameCount > 0, !channels.isEmpty else { return [] }
         let sliceFrames: Int = max(1, Int((plan.sliceLength * sampleRate).rounded()))
@@ -31,6 +36,13 @@ public struct SliceRenderer: Sendable {
                 let available: Int = min(sliceFrames, max(0, channel.count - startFrame))
                 if available > 0 {
                     window.replaceSubrange(0..<available, with: channel[startFrame..<(startFrame + available)])
+                }
+                if wraps {
+                    let remaining: Int = sliceFrames - available
+                    if remaining > 0, !channel.isEmpty {
+                        let wrapFrames: Int = min(remaining, channel.count)
+                        window.replaceSubrange(available..<(available + wrapFrames), with: channel[0..<wrapFrames])
+                    }
                 }
                 Self.applyFades(&window, fadeFrames: fadeFrames)
                 return window

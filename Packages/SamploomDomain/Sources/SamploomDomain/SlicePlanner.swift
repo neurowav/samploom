@@ -17,22 +17,23 @@ public struct SlicePlanner: Sendable {
         repeats: Int = 4,
         division: GridDivision = .bar,
         seed: UInt64,
+        offset: TimeInterval = 0,
         isSilent: (TimeInterval) -> Bool = { _ in false }
     ) -> SlicePlan {
         let sliceLength: TimeInterval = grid.seconds(forBars: max(1, barsPerSlice))
         let step: TimeInterval = grid.step(for: division)
         let repeatCount: Int = max(1, repeats)
-        guard step > 0, duration > 0 else {
+        let gridOffset: TimeInterval = max(0, offset)
+        guard step > 0, duration > gridOffset else {
             return .init(sliceLength: sliceLength, starts: [])
         }
-        // A start is only usable if the whole slice fits into the sample.
-        let latestStart: TimeInterval = max(0, duration - sliceLength)
-        let capacity: Int = Int((latestStart / step).rounded(.down)) + 1
+        // Starts must sit inside the file; a slice may run past its end and wrap.
+        let capacity: Int = Int(((duration - gridOffset) / step).rounded(.up))
         var generator: SeededGenerator = .init(seed: seed)
         let order: [Int] = Array(0..<capacity).shuffled(using: &generator)
         var validStarts: [TimeInterval] = []
         for index in order {
-            let start: TimeInterval = Double(index) * step
+            let start: TimeInterval = gridOffset + Double(index) * step
             if isSilent(start) { continue }
             validStarts.append(start)
             if mode == .single || validStarts.count == repeatCount {

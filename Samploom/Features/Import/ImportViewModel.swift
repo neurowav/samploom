@@ -18,6 +18,8 @@ final class ImportViewModel {
     var errorMessage: String?
     var division: GridDivision = .bar
     var mode: SliceMode = .single
+    /// Moves the grid origin inside the bar, for samples that do not start on a downbeat.
+    var gridOffset: TimeInterval = 0
     private(set) var seed: UInt64 = .random(in: UInt64.min...UInt64.max)
     /// Set when the user types a tempo; cleared on the next import.
     private(set) var manualTempo: Tempo?
@@ -66,6 +68,14 @@ final class ImportViewModel {
         }
     }
 
+    /// Offset actually used by the plan: the slider can keep a stale value when
+    /// the tempo changes and the bar gets shorter.
+    var effectiveGridOffset: TimeInterval {
+        guard let grid else { return 0 }
+        let limit: TimeInterval = max(0, grid.secondsPerBar - 0.001)
+        return min(max(0, gridOffset), limit)
+    }
+
     /// Slice plan for the current settings, or `nil` while audio is still decoding.
     var plan: SlicePlan? {
         guard let grid, let decoded else { return nil }
@@ -78,8 +88,9 @@ final class ImportViewModel {
             repeats: repeats,
             division: division,
             seed: seed,
+            offset: effectiveGridOffset,
             isSilent: { start in
-                decoded.isSilent(startingAt: start, length: sliceLength)
+                decoded.isSilent(startingAt: start, length: sliceLength, wraps: true)
             }
         )
     }
@@ -108,6 +119,7 @@ final class ImportViewModel {
         info = nil
         decoded = nil
         manualTempo = nil
+        gridOffset = 0
         Task {
             do {
                 let sample: ImportedSample = try await storage.importFile(at: url)

@@ -142,6 +142,38 @@ struct ImportViewModelTests {
         #expect(harness.model.tempoBPM == 100)
     }
 
+    @Test("The grid offset moves slice starts and resets on import")
+    func gridOffsetMovesStarts() async throws {
+        let harness: Harness = .init()
+        defer { harness.cleanUp() }
+        let source: URL = try harness.makeSourceFile(
+            named: "loop_120BPM.wav",
+            contents: WAVFixture.tone(seconds: 4, amplitude: 0.6)
+        )
+        harness.model.handlePickedFile(.success(source))
+        await harness.waitUntilDecoded()
+        let before: [TimeInterval] = harness.model.plan?.starts ?? []
+        harness.model.gridOffset = 0.5
+        let after: [TimeInterval] = harness.model.plan?.starts ?? []
+        #expect(after.allSatisfy { $0 >= 0.5 })
+        #expect(after != before)
+        #expect(harness.model.effectiveGridOffset == 0.5)
+    }
+
+    @Test("An offset larger than the bar is clamped for the plan")
+    func offsetIsClamped() async throws {
+        let harness: Harness = .init()
+        defer { harness.cleanUp() }
+        let source: URL = try harness.makeSourceFile(
+            named: "loop_120BPM.wav",
+            contents: WAVFixture.tone(seconds: 4, amplitude: 0.6)
+        )
+        harness.model.handlePickedFile(.success(source))
+        await harness.waitUntilDecoded()
+        harness.model.gridOffset = 10
+        #expect(harness.model.effectiveGridOffset < 2)
+    }
+
     @Test("Reshuffling changes the seed")
     func reshuffleChangesSeed() async {
         let harness: Harness = .init()

@@ -37,6 +37,15 @@ struct DecodedSampleTests {
         #expect(decoded.isSilent(startingAt: 0, length: 0.5) == false)
     }
 
+    @Test("A wrapped window can reach the beginning of the sample")
+    func wrappedWindow() {
+        var channel: [Float] = Array(repeating: 0, count: 100)
+        channel[10] = 0.5
+        let decoded: DecodedSample = .init(sampleRate: 100, channels: [channel], waveform: [], isTruncated: false)
+        #expect(decoded.isSilent(startingAt: 0.8, length: 0.4))
+        #expect(decoded.isSilent(startingAt: 0.8, length: 0.4, wraps: true) == false)
+    }
+
     @Test("A window outside the sample is treated as silent")
     func outsideTheSample() {
         #expect(silentSample.isSilent(startingAt: 2, length: 1))
