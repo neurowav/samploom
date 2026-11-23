@@ -1,4 +1,5 @@
 import Foundation
+import SamploomDomain
 
 @testable import Samploom
 
@@ -63,5 +64,38 @@ actor DecoderSpy: SampleDecoding {
                 continuation.resume(with: prepared.removeFirst())
             }
         }
+    }
+}
+
+/// Player that records the slices it was given and lets a test deliver the
+/// boundary events itself. Keeping the callbacks after `stop()` reproduces the
+/// node reporting buffered slices after it has been stopped.
+@MainActor
+final class PlayerSpy: SlicePlaying {
+    private(set) var slices: [[SliceAudio]] = []
+    private(set) var callbacks: [@MainActor (PlaybackEvent) -> Void] = []
+    private(set) var stopCount: Int = 0
+    var failure: (any Error)?
+
+    func play(
+        _ slices: [SliceAudio],
+        onEvent: @escaping @MainActor (PlaybackEvent) -> Void
+    ) throws {
+        if let failure {
+            throw failure
+        }
+        self.slices.append(slices)
+        callbacks.append(onEvent)
+    }
+
+    func stop() {
+        stopCount += 1
+    }
+
+    /// Delivers an event to a pass: the latest one unless a test says otherwise.
+    func send(_ event: PlaybackEvent, pass: Int? = nil) {
+        let index: Int = pass ?? callbacks.count - 1
+        guard callbacks.indices.contains(index) else { return }
+        callbacks[index](event)
     }
 }

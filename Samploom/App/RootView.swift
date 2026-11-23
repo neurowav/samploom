@@ -3,7 +3,9 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct RootView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @State private var viewModel: ImportViewModel = .init()
+    @State private var playback: PlaybackController = .init()
 
     var body: some View {
         ZStack {
@@ -26,6 +28,21 @@ struct RootView: View {
             allowedContentTypes: [.audio]
         ) { result in
             viewModel.handlePickedFile(result)
+        }
+        .onChange(of: viewModel.content) { _, newValue in
+            if newValue == .importing {
+                playback.stop()
+            }
+        }
+        .onChange(of: viewModel.plan) { _, _ in
+            playback.stop()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            // Without a background audio mode the pass stops when the app is
+            // suspended; reset the screen so it does not stay on "playing".
+            if phase == .background {
+                playback.stop()
+            }
         }
         .alert("Import failed", isPresented: isShowingError) {
             Button("OK", role: .cancel) {}
@@ -95,13 +112,19 @@ struct RootView: View {
             }
 
             if let decoded: DecodedSample = viewModel.decoded {
-                WaveformView(sample: decoded, plan: viewModel.plan)
+                WaveformView(
+                    sample: decoded,
+                    plan: viewModel.plan,
+                    playingStart: playback.playingStart
+                )
                 if decoded.isTruncated {
                     Text("Only the first \(Int(DecodedSample.maxDuration)) s of the file are used.")
                         .font(Typography.caption)
                         .foregroundStyle(.textSecondary)
                 }
             }
+
+            playbackControls
 
             HStack(alignment: .center) {
                 Text("Tempo")
@@ -189,6 +212,44 @@ struct RootView: View {
             Text(value)
                 .font(Typography.numeric)
                 .foregroundStyle(.textPrimary)
+        }
+    }
+
+    private var playbackControls: some View {
+        VStack(alignment: .leading, spacing: Metrics.Spacing.small) {
+            Button(playback.isPlaying ? "Stop" : "Play") {
+                playback.toggle(plan: viewModel.plan, decoded: viewModel.decoded)
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .disabled(isPlaybackAvailable == false)
+
+            ProgressView(value: playback.progress)
+                .tint(.accent)
+
+            Text(playbackStatusText)
+                .font(Typography.caption)
+                .foregroundStyle(.textSecondary)
+        }
+    }
+
+    private var isPlaybackAvailable: Bool {
+        viewModel.decoded != nil && viewModel.plan?.isEmpty == false
+    }
+
+    private var playbackStatusText: String {
+        if let failure: String = playback.failure {
+            return failure
+        }
+        switch playback.state {
+        case .idle:
+            guard let count: Int = viewModel.plan?.starts.count, count > 0 else {
+                return "Nothing to play yet."
+            }
+            return "One pass over \(count) slices."
+        case .playing:
+            return "Slice \(playback.currentSlice + 1) of \(playback.sliceCount)."
+        case .finished:
+            return "One pass done."
         }
     }
 

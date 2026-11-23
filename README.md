@@ -2,7 +2,7 @@
 
 Slice any sample by the musical grid and jam with it — a local, offline loop slicer for iOS.
 
-An audio file from Files becomes grid-aligned slices; slices are replayed as a loop and exported back to a file. Everything runs on device: no server, no account.
+An audio file from Files becomes grid-aligned slices; the app plays them back once so you can hear the loop. Everything runs on device: no server, no account.
 
 ## Requirements
 
@@ -21,7 +21,9 @@ stay separate, the rate is normalised to 48 kHz, and files longer than 40 s are
 cut to their first 40 s.
 The screen draws the waveform with the slice windows on top; silent positions
 are skipped so a slice is never empty. `SliceRenderer` cuts the planned slices
-and bakes 8 ms fades into their edges. Playback is next.
+and bakes 8 ms fades into their edges. Playback schedules the whole pass before
+the first sample is heard — no gap at the joins — plays it once, highlights the
+slice being heard on the waveform and shows the position in the pass.
 
 ## Signing
 
@@ -41,7 +43,7 @@ without it.
 ```
 Samploom/
 ├── App/            App entry point and the root screen
-├── Core/Audio/     Duration and tempo detection for imported files
+├── Core/Audio/     Decoding, tempo detection and playback of samples
 ├── Core/Storage/   On-device copy of imported samples
 ├── DesignSystem/   Colour, type and metric tokens, shared surfaces
 ├── Features/       Screen state and behaviour, one folder per feature

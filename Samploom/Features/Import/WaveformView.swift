@@ -5,11 +5,14 @@ import SwiftUI
 struct WaveformView: View {
     let sample: DecodedSample
     let plan: SlicePlan?
+    /// Start of the slice being heard, highlighted above the plan.
+    let playingStart: TimeInterval?
 
     var body: some View {
         Canvas { context, size in
             drawWaveform(in: &context, size: size)
             drawPlan(in: &context, size: size)
+            drawPlayingSlice(in: &context, size: size)
         }
         .frame(height: 96)
         .background(.backgroundPrimary, in: .rect(cornerRadius: Metrics.Radius.chip))
@@ -53,5 +56,19 @@ struct WaveformView: View {
                 lineWidth: Metrics.Stroke.hairline
             )
         }
+    }
+
+    private func drawPlayingSlice(in context: inout GraphicsContext, size: CGSize) {
+        guard let plan, let playingStart, sample.duration > 0, size.width > 0 else { return }
+        let x: CGFloat = CGFloat(playingStart / sample.duration) * size.width
+        let width: CGFloat = min(CGFloat(plan.sliceLength / sample.duration) * size.width, size.width - x)
+        guard width > 0 else { return }
+        let rect: CGRect = .init(x: x, y: 0, width: width, height: size.height)
+        context.fill(Path(rect), with: .color(.accent.opacity(0.3)))
+        context.stroke(
+            Path(rect),
+            with: .color(.accent),
+            lineWidth: Metrics.Stroke.hairline * 2
+        )
     }
 }
