@@ -142,7 +142,22 @@ struct RootView: View {
             }
 
             valueRow(title: "Bar", value: secondsText(grid.secondsPerBar))
-            valueRow(title: "Length", value: secondsText(grid.step(for: viewModel.division)))
+            valueRow(title: "Slice", value: secondsText(grid.step(for: viewModel.division)))
+
+            HStack(alignment: .center) {
+                Text("Length")
+                    .font(Typography.body)
+                    .foregroundStyle(.textSecondary)
+
+                Spacer()
+
+                Text("\(viewModel.lengthBars) bars")
+                    .font(Typography.numeric)
+                    .foregroundStyle(.textPrimary)
+
+                Stepper("", value: $viewModel.lengthBars, in: ImportViewModel.supportedLengthBars)
+                    .labelsHidden()
+            }
 
             VStack(alignment: .leading, spacing: Metrics.Spacing.xSmall) {
                 HStack {

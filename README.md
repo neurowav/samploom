@@ -22,8 +22,13 @@ cut to their first 40 s.
 The screen draws the waveform with the slice windows on top; silent positions
 are skipped so a slice is never empty. The Bar / 1/2 bar / Beat / 1/2 beat /
 1/4 beat control sets both the slice length and the grid its start may land on,
-so a finer division really does cut a shorter piece. `SliceRenderer` cuts the planned slices
-and bakes 8 ms fades into their edges. Playback joins the slices with those
+so a finer division really does cut a shorter piece. The whole pass is 8–16
+bars — half a square to one square — and the number of slices follows from the
+division. `SliceRenderer` cuts the planned slices
+and bakes 8 ms fades into their edges. Every generated pattern is four slices
+long and repeats to fill the pass, so a random loop keeps coming back; when the
+pass length is not a multiple of four, the last loop is cut short. Playback
+joins the slices with those
 fades as crossfades, so repeats have neither a gap nor a click at the join, and
 schedules the whole pass before the first sample is heard. A pass plays once,
 highlights the slice being heard on the waveform and shows the position.

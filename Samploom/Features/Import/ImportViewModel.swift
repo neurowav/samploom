@@ -19,8 +19,21 @@ final class ImportViewModel {
     var mode: SliceMode = .single
     /// Moves the grid origin inside the bar, for samples that do not start on a downbeat.
     var gridOffset: TimeInterval = 0
-    /// How many times the selected slice is repeated in one pass.
-    let repeats: Int = 4
+    /// Slices in the generated loop. The pattern is built once and repeated to
+    /// fill the pass, so a liked random pattern keeps coming back.
+    static let loopSlices: Int = 4
+    /// Total length of one pass, in bars. Half a square (8 bars) to one
+    /// square (16 bars).
+    static let supportedLengthBars: ClosedRange<Int> = 8...16
+    private var lengthBarsValue: Int = 8
+    /// Whole pass length in bars, clamped to the supported range.
+    var lengthBars: Int {
+        get { lengthBarsValue }
+        set {
+            let range: ClosedRange<Int> = Self.supportedLengthBars
+            lengthBarsValue = min(max(newValue, range.lowerBound), range.upperBound)
+        }
+    }
     private(set) var seed: UInt64 = .random(in: UInt64.min...UInt64.max)
     /// Set when the user types a tempo; cleared on the next import.
     private(set) var manualTempo: Tempo?
@@ -82,16 +95,26 @@ final class ImportViewModel {
         return min(max(0, gridOffset), limit)
     }
 
+    /// Slices in one pass: the chosen pass length divided by the slice length.
+    var repeats: Int {
+        guard let grid else { return 1 }
+        let sliceLength: TimeInterval = grid.step(for: division)
+        guard sliceLength > 0 else { return 1 }
+        let passLength: TimeInterval = grid.seconds(forBars: lengthBars)
+        return max(1, Int((passLength / sliceLength).rounded()))
+    }
+
     /// Slice plan for the current settings, or `nil` while audio is still decoding.
     var plan: SlicePlan? {
         guard let grid, let decoded else { return nil }
         // The selected division is both the grid step and the slice length.
         let sliceLength: TimeInterval = grid.step(for: division)
-        return planner.plan(
+        let totalSlices: Int = repeats
+        let loop: SlicePlan = planner.plan(
             mode: mode,
             grid: grid,
             duration: decoded.duration,
-            repeats: repeats,
+            repeats: min(Self.loopSlices, totalSlices),
             division: division,
             seed: seed,
             offset: effectiveGridOffset,
@@ -99,6 +122,8 @@ final class ImportViewModel {
                 decoded.isSilent(startingAt: start, length: sliceLength, wraps: true)
             }
         )
+        guard !loop.isEmpty else { return loop }
+        return loop.repeated(to: totalSlices)
     }
 
     func chooseSample() {

@@ -102,7 +102,7 @@ struct ImportViewModelTests {
         await harness.model.importSample(from: source)
         let plan: SlicePlan = try #require(harness.model.plan)
         #expect(plan.sliceLength == 2.0)
-        #expect(plan.starts.count == 4)
+        #expect(plan.starts.count == 8)
     }
 
     @Test("A finer division makes the slice shorter")
@@ -119,6 +119,51 @@ struct ImportViewModelTests {
         #expect(harness.model.plan?.sliceLength == 0.25)
         harness.model.division = .quarterBeat
         #expect(harness.model.plan?.sliceLength == 0.125)
+    }
+
+    @Test("The pass length is set in bars and stays between half and one square")
+    func passLengthInBars() async throws {
+        let harness: Harness = .init(
+            info: SampleFixture.info(tempo: try .init(beatsPerMinute: 120)),
+            decoded: SampleFixture.decoded(duration: 4)
+        )
+        defer { harness.cleanUp() }
+        let source: URL = try harness.makeFile(named: "loop.wav", data: Data("RIFF".utf8))
+        await harness.model.importSample(from: source)
+        #expect(harness.model.lengthBars == 8)
+        #expect(harness.model.repeats == 8)
+        #expect(harness.model.plan?.starts.count == 8)
+        harness.model.division = .halfBar
+        #expect(harness.model.repeats == 16)
+        #expect(harness.model.plan?.starts.count == 16)
+        harness.model.lengthBars = 16
+        #expect(harness.model.repeats == 32)
+        #expect(harness.model.plan?.starts.count == 32)
+        harness.model.lengthBars = 100
+        #expect(harness.model.lengthBars == 16)
+        harness.model.lengthBars = 1
+        #expect(harness.model.lengthBars == 8)
+    }
+
+    @Test("The generated loop repeats to fill the pass")
+    func loopFillsThePass() async throws {
+        let harness: Harness = .init(
+            info: SampleFixture.info(tempo: try .init(beatsPerMinute: 120)),
+            decoded: SampleFixture.decoded(duration: 8)
+        )
+        defer { harness.cleanUp() }
+        let source: URL = try harness.makeFile(named: "loop.wav", data: Data("RIFF".utf8))
+        await harness.model.importSample(from: source)
+        harness.model.mode = .random
+        harness.model.lengthBars = 16
+        let starts: [TimeInterval] = try #require(harness.model.plan?.starts)
+        #expect(starts.count == 16)
+        #expect(Array(starts[0..<4]) == Array(starts[4..<8]))
+        #expect(Array(starts[0..<4]) == Array(starts[12..<16]))
+        harness.model.lengthBars = 10
+        let partial: [TimeInterval] = try #require(harness.model.plan?.starts)
+        #expect(partial.count == 10)
+        #expect(Array(partial[8..<10]) == Array(partial[0..<2]))
     }
 
     @Test("A silent sample gives an empty plan instead of empty slices")
