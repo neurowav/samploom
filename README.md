@@ -21,9 +21,10 @@ stay separate, the rate is normalised to 48 kHz, and files longer than 40 s are
 cut to their first 40 s.
 The screen draws the waveform with the slice windows on top; silent positions
 are skipped so a slice is never empty. `SliceRenderer` cuts the planned slices
-and bakes 8 ms fades into their edges. Playback schedules the whole pass before
-the first sample is heard — no gap at the joins — plays it once, highlights the
-slice being heard on the waveform and shows the position in the pass.
+and bakes 8 ms fades into their edges. Playback joins the slices with those
+fades as crossfades, so repeats have neither a gap nor a click at the join, and
+schedules the whole pass before the first sample is heard. A pass plays once,
+highlights the slice being heard on the waveform and shows the position.
 
 ## Signing
 

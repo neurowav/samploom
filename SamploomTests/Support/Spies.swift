@@ -80,7 +80,7 @@ final class PlayerSpy: SlicePlaying {
     func play(
         _ slices: [SliceAudio],
         onEvent: @escaping @MainActor (PlaybackEvent) -> Void
-    ) throws {
+    ) async throws {
         if let failure {
             throw failure
         }

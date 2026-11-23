@@ -29,6 +29,7 @@ public struct SliceRenderer: Sendable {
         guard sampleRate > 0, frameCount > 0, !channels.isEmpty else { return [] }
         let sliceFrames: Int = max(1, Int((plan.sliceLength * sampleRate).rounded()))
         let fadeFrames: Int = min(Int((fadeDuration * sampleRate).rounded()), sliceFrames / 2)
+        let bakedFadeDuration: TimeInterval = Double(fadeFrames) / sampleRate
         return plan.starts.map { start in
             let startFrame: Int = max(0, Int((start * sampleRate).rounded()))
             let windows: [[Float]] = channels.map { channel in
@@ -38,16 +39,22 @@ public struct SliceRenderer: Sendable {
                     window.replaceSubrange(0..<available, with: channel[startFrame..<(startFrame + available)])
                 }
                 if wraps {
-                    let remaining: Int = sliceFrames - available
-                    if remaining > 0, !channel.isEmpty {
-                        let wrapFrames: Int = min(remaining, channel.count)
-                        window.replaceSubrange(available..<(available + wrapFrames), with: channel[0..<wrapFrames])
+                    var filled: Int = available
+                    while filled < sliceFrames, !channel.isEmpty {
+                        let wrapFrames: Int = min(sliceFrames - filled, channel.count)
+                        window.replaceSubrange(filled..<(filled + wrapFrames), with: channel[0..<wrapFrames])
+                        filled += wrapFrames
                     }
                 }
                 Self.applyFades(&window, fadeFrames: fadeFrames)
                 return window
             }
-            return .init(channels: windows, sampleRate: sampleRate, start: start)
+            return .init(
+                channels: windows,
+                sampleRate: sampleRate,
+                start: start,
+                fadeDuration: bakedFadeDuration
+            )
         }
     }
 

@@ -19,7 +19,7 @@ protocol SlicePlaying: AnyObject {
     func play(
         _ slices: [SliceAudio],
         onEvent: @escaping @MainActor (PlaybackEvent) -> Void
-    ) throws
+    ) async throws
     /// Drops everything that is still scheduled and goes silent.
     func stop()
 }

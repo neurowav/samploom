@@ -52,6 +52,16 @@ struct DecodedSampleTests {
         #expect(silentSample.isSilent(startingAt: 0.9, length: 0.05))
     }
 
+    @Test("A wrapped window longer than the sample stays inside the audio")
+    func longWrappedWindow() {
+        var channel: [Float] = Array(repeating: 0, count: 100)
+        channel[10] = 0.5
+        let decoded: DecodedSample = .init(sampleRate: 100, channels: [channel], waveform: [], isTruncated: false)
+        // Three passes over the sample: the tone is reached on the second one.
+        #expect(decoded.isSilent(startingAt: 0.5, length: 2.5, wraps: true) == false)
+        #expect(silentSample.isSilent(startingAt: 0.5, length: 2.5, wraps: true))
+    }
+
     @Test("Duration follows the frame count")
     func duration() {
         let decoded: DecodedSample = .init(

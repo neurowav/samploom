@@ -59,15 +59,15 @@ final class PlaybackController {
         return starts[currentSlice]
     }
 
-    func toggle(plan: SlicePlan?, decoded: DecodedSample?) {
+    func toggle(plan: SlicePlan?, decoded: DecodedSample?) async {
         if isPlaying {
             stop()
         } else {
-            play(plan: plan, decoded: decoded)
+            await play(plan: plan, decoded: decoded)
         }
     }
 
-    func play(plan: SlicePlan?, decoded: DecodedSample?) {
+    func play(plan: SlicePlan?, decoded: DecodedSample?) async {
         guard let plan, let decoded, !plan.isEmpty else { return }
         let slices: [SliceAudio] = renderer.render(
             plan: plan,
@@ -83,10 +83,14 @@ final class PlaybackController {
         failure = nil
         state = .playing
         do {
-            try player.play(slices) { [weak self] event in
+            try await player.play(slices) { [weak self] event in
                 self?.receive(event, token: token)
             }
+            if token != generation {
+                player.stop()
+            }
         } catch {
+            guard token == generation else { return }
             state = .idle
             currentSlice = 0
             sliceCount = 0

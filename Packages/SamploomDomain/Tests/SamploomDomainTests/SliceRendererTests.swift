@@ -61,10 +61,10 @@ struct SliceRendererTests {
         let slices: [SliceAudio] = renderer.render(plan: plan, channels: [channel], sampleRate: sampleRate)
         let slice: SliceAudio = slices[0]
         #expect(slice.frameCount == 1_000)
-        // 0.2 s in: 300 frames are left, the next 500 come from the beginning,
-        // and the rest of the window stays silent because one pass is not enough.
+        // 0.2 s in: 300 frames are left, then the 500-frame sample repeats
+        // until the window is full.
         #expect(slice.channels[0][350] == 0.5)
-        #expect(slice.channels[0][900] == 0)
+        #expect(slice.channels[0][900] == 0.5)
     }
 
     @Test("Fades are capped at half the slice")
@@ -76,6 +76,7 @@ struct SliceRendererTests {
         #expect(slice.frameCount == 4)
         #expect(slice.channels[0].first == 0)
         #expect(slice.channels[0].last == 0)
+        #expect(slice.fadeDuration == 0.002)
     }
 
     @Test("Every channel gets the same treatment")

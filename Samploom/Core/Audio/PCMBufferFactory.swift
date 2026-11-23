@@ -8,20 +8,24 @@ import SamploomDomain
 /// sample stays mono and a stereo one keeps both channels.
 nonisolated enum PCMBufferFactory {
     static func makeBuffer(from slice: SliceAudio) -> AVAudioPCMBuffer? {
-        let frameCount: Int = slice.frameCount
+        makeBuffer(channels: slice.channels, sampleRate: slice.sampleRate)
+    }
+
+    static func makeBuffer(channels: [[Float]], sampleRate: Double) -> AVAudioPCMBuffer? {
+        let frameCount: Int = channels.first?.count ?? 0
         guard frameCount > 0,
-              slice.channels.allSatisfy({ $0.count == frameCount }),
-              let channelCount: AVAudioChannelCount = .init(exactly: slice.channels.count),
+              channels.allSatisfy({ $0.count == frameCount }),
+              let channelCount: AVAudioChannelCount = .init(exactly: channels.count),
               let capacity: AVAudioFrameCount = .init(exactly: frameCount),
               let format: AVAudioFormat = .init(
-                  standardFormatWithSampleRate: slice.sampleRate,
+                  standardFormatWithSampleRate: sampleRate,
                   channels: channelCount
               ),
               let buffer: AVAudioPCMBuffer = .init(pcmFormat: format, frameCapacity: capacity),
               let data: UnsafePointer<UnsafeMutablePointer<Float>> = buffer.floatChannelData
         else { return nil }
         buffer.frameLength = capacity
-        for (index, channel) in slice.channels.enumerated() {
+        for (index, channel) in channels.enumerated() {
             data[index].update(from: channel, count: frameCount)
         }
         return buffer

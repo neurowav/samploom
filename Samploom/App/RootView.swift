@@ -189,7 +189,7 @@ struct RootView: View {
                 }
                 .buttonStyle(SecondaryButtonStyle())
 
-                Text("Slices are cut with \(fadeText) fades so the joins never click.")
+                Text("Each slice is cut with \(fadeText) fades; the joins crossfade them.")
                     .font(Typography.caption)
                     .foregroundStyle(.textSecondary)
             }
@@ -218,7 +218,9 @@ struct RootView: View {
     private var playbackControls: some View {
         VStack(alignment: .leading, spacing: Metrics.Spacing.small) {
             Button(playback.isPlaying ? "Stop" : "Play") {
-                playback.toggle(plan: viewModel.plan, decoded: viewModel.decoded)
+                Task {
+                    await playback.toggle(plan: viewModel.plan, decoded: viewModel.decoded)
+                }
             }
             .buttonStyle(PrimaryButtonStyle())
             .disabled(isPlaybackAvailable == false)
