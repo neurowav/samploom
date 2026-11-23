@@ -3,7 +3,7 @@ import Testing
 
 @testable import Samploom
 
-@Suite("SampleInspector")
+@Suite("SampleInspector", .timeLimit(.minutes(1)))
 struct SampleInspectorTests {
     @Test("Duration is read from a real WAV file")
     func readsDuration() async throws {

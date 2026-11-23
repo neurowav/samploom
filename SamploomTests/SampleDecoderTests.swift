@@ -3,7 +3,7 @@ import Testing
 
 @testable import Samploom
 
-@Suite("SampleDecoder")
+@Suite("SampleDecoder", .timeLimit(.minutes(1)))
 struct SampleDecoderTests {
     @Test("A mono WAV decodes into one channel at the engine rate")
     func decodesMonoWav() async throws {

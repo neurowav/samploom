@@ -3,7 +3,7 @@ import Testing
 
 @testable import Samploom
 
-@Suite("DecodedSample")
+@Suite("DecodedSample", .timeLimit(.minutes(1)))
 struct DecodedSampleTests {
     private let silentSample: DecodedSample = .init(
         sampleRate: 100,

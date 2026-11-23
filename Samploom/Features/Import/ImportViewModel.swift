@@ -26,16 +26,16 @@ final class ImportViewModel {
     /// Set when the user types a tempo; cleared on the next import.
     private(set) var manualTempo: Tempo?
 
-    private let storage: SampleStorage
-    private let inspector: SampleInspector
-    private let decoder: SampleDecoder
+    private let storage: any SampleStoring
+    private let inspector: any SampleInspecting
+    private let decoder: any SampleDecoding
     private let planner: SlicePlanner = .init()
-    private var pendingSample: ImportedSample?
+    private var importTask: Task<Void, Never>?
 
     init(
-        storage: SampleStorage = .init(),
-        inspector: SampleInspector = .init(),
-        decoder: SampleDecoder = .init()
+        storage: any SampleStoring = SampleStorage(),
+        inspector: any SampleInspecting = SampleInspector(),
+        decoder: any SampleDecoding = SampleDecoder()
     ) {
         self.storage = storage
         self.inspector = inspector
@@ -114,7 +114,7 @@ final class ImportViewModel {
     func handlePickedFile(_ result: Result<URL, Error>) {
         switch result {
         case .success(let url):
-            importSample(from: url)
+            startImport(from: url)
         case .failure(let error):
             // Dismissing the picker is not an error worth alerting about.
             guard (error as NSError).code != NSUserCancelledError else { return }
@@ -122,37 +122,49 @@ final class ImportViewModel {
         }
     }
 
-    /// The sample currently on screen stays untouched until the new file has
-    /// been copied and analysed: collapsing it first would read as a flicker the
-    /// moment the picker closes.
-    private func importSample(from url: URL) {
+    /// Copies, inspects and decodes the file. Awaitable on purpose: callers and
+    /// tests get the finished state instead of polling for it.
+    func importSample(from url: URL) async {
         content = .importing
-        Task {
-            do {
-                let sample: ImportedSample = try await storage.importFile(at: url)
-                pendingSample = sample
-                let inspected: SampleInfo? = try? await inspector.inspect(
-                    fileAt: sample.url,
-                    originalFileName: sample.displayName
-                )
-                let decodedSample: DecodedSample? = try? await decoder.decode(fileAt: sample.url)
-                guard pendingSample == sample else {
-                    try? await storage.remove(sample)
-                    return
-                }
-                let previous: ImportedSample? = loaded?.sample
-                loaded = .init(sample: sample, info: inspected, decoded: decodedSample)
-                manualTempo = nil
-                gridOffset = 0
-                pendingSample = nil
-                if let previous {
-                    try? await storage.remove(previous)
-                }
-                content = .imported(sample)
-            } catch {
-                content = loaded.map { .imported($0.sample) } ?? .empty
+        var copied: ImportedSample?
+        do {
+            let sample: ImportedSample = try await storage.importFile(at: url)
+            copied = sample
+            try Task.checkCancellation()
+            let inspected: SampleInfo? = try? await inspector.inspect(
+                fileAt: sample.url,
+                originalFileName: sample.displayName
+            )
+            try Task.checkCancellation()
+            let decodedSample: DecodedSample? = try? await decoder.decode(fileAt: sample.url)
+            try Task.checkCancellation()
+            let previous: ImportedSample? = loaded?.sample
+            loaded = .init(sample: sample, info: inspected, decoded: decodedSample)
+            manualTempo = nil
+            gridOffset = 0
+            if let previous {
+                try? await storage.remove(previous)
+            }
+            content = .imported(sample)
+        } catch {
+            if let copied, loaded?.sample != copied {
+                try? await storage.remove(copied)
+            }
+            content = loaded.map { .imported($0.sample) } ?? .empty
+            if !(error is CancellationError) {
                 errorMessage = error.localizedDescription
             }
         }
+    }
+
+    /// Test seam: waits for the import that was started from the picker.
+    func awaitPendingImport() async {
+        await importTask?.value
+    }
+
+    private func startImport(from url: URL) {
+        // A newer pick wins: the previous import stops where it is.
+        importTask?.cancel()
+        importTask = Task { await importSample(from: url) }
     }
 }

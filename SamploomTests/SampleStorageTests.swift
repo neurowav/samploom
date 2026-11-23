@@ -3,7 +3,7 @@ import Testing
 
 @testable import Samploom
 
-@Suite("SampleStorage")
+@Suite("SampleStorage", .timeLimit(.minutes(1)))
 struct SampleStorageTests {
     @Test("Import copies the picked file into storage")
     func importCopiesFile() async throws {

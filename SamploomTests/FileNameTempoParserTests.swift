@@ -3,7 +3,7 @@ import Testing
 
 @testable import Samploom
 
-@Suite("FileNameTempoParser")
+@Suite("FileNameTempoParser", .timeLimit(.minutes(1)))
 struct FileNameTempoParserTests {
     private let parser: FileNameTempoParser = .init()
 
