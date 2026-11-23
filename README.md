@@ -20,7 +20,9 @@ bar when a file does not start on a downbeat. Audio is decoded once: channels
 stay separate, the rate is normalised to 48 kHz, and files longer than 40 s are
 cut to their first 40 s.
 The screen draws the waveform with the slice windows on top; silent positions
-are skipped so a slice is never empty. `SliceRenderer` cuts the planned slices
+are skipped so a slice is never empty. The Bar / Beat / 1/2 / 1/4 control sets
+both the slice length and the grid its start may land on, so a finer division
+really does cut a shorter piece. `SliceRenderer` cuts the planned slices
 and bakes 8 ms fades into their edges. Playback joins the slices with those
 fades as crossfades, so repeats have neither a gap nor a click at the join, and
 schedules the whole pass before the first sample is heard. A pass plays once,

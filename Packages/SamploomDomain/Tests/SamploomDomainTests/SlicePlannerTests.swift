@@ -37,9 +37,25 @@ struct SlicePlannerTests {
         )
         #expect(plan.starts.count == 4)
         #expect(Set(plan.starts).count == 4)
+        #expect(plan.sliceLength == grid.secondsPerBeat)
         let step: TimeInterval = grid.step(for: .beat)
         for start in plan.starts {
             #expect(isOnGrid(start, step: step))
+        }
+    }
+
+    @Test("The division sets the slice length")
+    func divisionSetsSliceLength() {
+        for division in GridDivision.allCases {
+            let plan: SlicePlan = planner.plan(
+                mode: .single,
+                grid: grid,
+                duration: 8,
+                repeats: 4,
+                division: division,
+                seed: 1
+            )
+            #expect(plan.sliceLength == grid.step(for: division))
         }
     }
 

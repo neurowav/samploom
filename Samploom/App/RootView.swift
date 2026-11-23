@@ -142,7 +142,7 @@ struct RootView: View {
             }
 
             valueRow(title: "Bar", value: secondsText(grid.secondsPerBar))
-            valueRow(title: "Step", value: secondsText(grid.step(for: viewModel.division)))
+            valueRow(title: "Length", value: secondsText(grid.step(for: viewModel.division)))
 
             VStack(alignment: .leading, spacing: Metrics.Spacing.xSmall) {
                 HStack {
@@ -164,7 +164,7 @@ struct RootView: View {
             Divider()
                 .background(.hairline)
 
-            Picker("Grid division", selection: $viewModel.division) {
+            Picker("Slice length", selection: $viewModel.division) {
                 ForEach(GridDivision.allCases, id: \.self) { division in
                     Text(divisionTitle(division)).tag(division)
                 }

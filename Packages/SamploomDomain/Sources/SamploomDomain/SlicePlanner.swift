@@ -6,6 +6,11 @@ import Foundation
 /// would sound like a piece cut out at an arbitrary moment. The caller decides
 /// what counts as an unusable slice — in the app that is a slice with no
 /// audible content — and the planner simply skips such positions.
+///
+/// The division is also the slice length: a bar division cuts bars, a quarter-
+/// beat division cuts quarter-beat cells. This keeps the windows on screen the
+/// same size as the audio they produce, and making the division finer really
+/// does make the slice shorter.
 public struct SlicePlanner: Sendable {
     public init() {}
 
@@ -13,15 +18,14 @@ public struct SlicePlanner: Sendable {
         mode: SliceMode,
         grid: MusicalGrid,
         duration: TimeInterval,
-        barsPerSlice: Int = 1,
         repeats: Int = 4,
         division: GridDivision = .bar,
         seed: UInt64,
         offset: TimeInterval = 0,
         isSilent: (TimeInterval) -> Bool = { _ in false }
     ) -> SlicePlan {
-        let sliceLength: TimeInterval = grid.seconds(forBars: max(1, barsPerSlice))
         let step: TimeInterval = grid.step(for: division)
+        let sliceLength: TimeInterval = step
         let repeatCount: Int = max(1, repeats)
         let gridOffset: TimeInterval = max(0, offset)
         guard step > 0, duration > gridOffset else {

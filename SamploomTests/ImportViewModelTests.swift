@@ -105,6 +105,22 @@ struct ImportViewModelTests {
         #expect(plan.starts.count == 4)
     }
 
+    @Test("A finer division makes the slice shorter")
+    func finerDivisionShortensSlice() async throws {
+        let harness: Harness = .init(
+            info: SampleFixture.info(tempo: try .init(beatsPerMinute: 120)),
+            decoded: SampleFixture.decoded(duration: 4)
+        )
+        defer { harness.cleanUp() }
+        let source: URL = try harness.makeFile(named: "loop.wav", data: Data("RIFF".utf8))
+        await harness.model.importSample(from: source)
+        #expect(harness.model.plan?.sliceLength == 2.0)
+        harness.model.division = .halfBeat
+        #expect(harness.model.plan?.sliceLength == 0.25)
+        harness.model.division = .quarterBeat
+        #expect(harness.model.plan?.sliceLength == 0.125)
+    }
+
     @Test("A silent sample gives an empty plan instead of empty slices")
     func silentSampleHasNoPlan() async throws {
         let harness: Harness = .init(

@@ -19,8 +19,7 @@ final class ImportViewModel {
     var mode: SliceMode = .single
     /// Moves the grid origin inside the bar, for samples that do not start on a downbeat.
     var gridOffset: TimeInterval = 0
-    /// Length of one slice and how many repeats the plan contains.
-    let barsPerSlice: Int = 1
+    /// How many times the selected slice is repeated in one pass.
     let repeats: Int = 4
     private(set) var seed: UInt64 = .random(in: UInt64.min...UInt64.max)
     /// Set when the user types a tempo; cleared on the next import.
@@ -86,12 +85,12 @@ final class ImportViewModel {
     /// Slice plan for the current settings, or `nil` while audio is still decoding.
     var plan: SlicePlan? {
         guard let grid, let decoded else { return nil }
-        let sliceLength: TimeInterval = grid.seconds(forBars: barsPerSlice)
+        // The selected division is both the grid step and the slice length.
+        let sliceLength: TimeInterval = grid.step(for: division)
         return planner.plan(
             mode: mode,
             grid: grid,
             duration: decoded.duration,
-            barsPerSlice: barsPerSlice,
             repeats: repeats,
             division: division,
             seed: seed,
