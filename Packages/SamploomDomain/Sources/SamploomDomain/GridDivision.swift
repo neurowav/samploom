@@ -5,6 +5,7 @@
 /// sounding like part of the sample.
 public enum GridDivision: String, CaseIterable, Sendable {
     case bar
+    case halfBar
     case beat
     case halfBeat
     case quarterBeat

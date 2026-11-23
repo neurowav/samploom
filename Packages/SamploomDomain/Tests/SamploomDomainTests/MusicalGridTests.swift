@@ -17,6 +17,7 @@ struct MusicalGridTests {
     func divisionSteps() throws {
         let grid: MusicalGrid = .init(tempo: try .init(beatsPerMinute: 120))
         #expect(grid.step(for: .bar) == 2.0)
+        #expect(grid.step(for: .halfBar) == 1.0)
         #expect(grid.step(for: .beat) == 0.5)
         #expect(grid.step(for: .halfBeat) == 0.25)
         #expect(grid.step(for: .quarterBeat) == 0.125)

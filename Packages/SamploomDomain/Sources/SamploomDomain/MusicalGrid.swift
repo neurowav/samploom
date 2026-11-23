@@ -25,6 +25,8 @@ public struct MusicalGrid: Hashable, Sendable {
         switch division {
         case .bar:
             return secondsPerBar
+        case .halfBar:
+            return secondsPerBar / 2
         case .beat:
             return secondsPerBeat
         case .halfBeat:

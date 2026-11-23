@@ -302,12 +302,14 @@ struct RootView: View {
         switch division {
         case .bar:
             return "Bar"
+        case .halfBar:
+            return "1/2 bar"
         case .beat:
             return "Beat"
         case .halfBeat:
-            return "1/2"
+            return "1/2 beat"
         case .quarterBeat:
-            return "1/4"
+            return "1/4 beat"
         }
     }
 
